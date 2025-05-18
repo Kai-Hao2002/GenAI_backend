@@ -1,0 +1,9 @@
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv\bin\activate
+
+pip install django
+pip install django psycopg2-binary
+pip install djangorestframework
+
+cd GENAI_BACKEND
+python manage.py migrate
