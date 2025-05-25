@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'api',
     'accounts',
+    'ai',
 ]
 
 MIDDLEWARE = [
@@ -140,4 +141,5 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
 

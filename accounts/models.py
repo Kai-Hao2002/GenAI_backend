@@ -3,8 +3,7 @@ from django.db import models
 
 class CustomUser(AbstractUser):
     # 自訂欄位
-    phone = models.CharField(max_length=20, blank=True)
-    role = models.CharField(max_length=20, blank=True)
+    address = models.CharField(max_length=50, blank=True)
     # 重新定義 groups 與 user_permissions，加 related_name
     groups = models.ManyToManyField(
         Group,

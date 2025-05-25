@@ -1,3 +1,4 @@
+cd GENAI_BACKEND
 
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv\Scripts\Activate
@@ -7,8 +8,6 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install django
 pip install django psycopg2-binary
 pip install djangorestframework
-
-cd GENAI_BACKEND
 
 python manage.py makemigrations
 python manage.py migrate
