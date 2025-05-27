@@ -13,11 +13,11 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.timezone import now
 from accounts.serializers import UserSerializer
-
+from django.conf import settings
+from django.core.mail import send_mail
 
 User = get_user_model()
 
-# Register API
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -34,21 +34,42 @@ class RegisterView(APIView):
 
         if User.objects.filter(username=username).exists():
             return Response({"error": "Username already exists."}, status=400)
+        
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "email already exists."}, status=400)
 
-        user = User.objects.create_user(username=username, password=password, email=email,first_name=first_name,last_name=last_name,address=address)
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            address = address
+        )
+        
         user.is_active = False
         user.save()
 
-        # create verification link
+        # Create email activation link
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         activation_link = request.build_absolute_uri(
             reverse('activate', kwargs={'uidb64': uid, 'token': token})
         )
 
+        # Send verification email
+        subject = "Activate your account"
+        message = f"Hi {user.first_name},\n\nPlease click the link below to activate your account:\n{activation_link}\n\nThank you!"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+
+        try:
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        except Exception as e:
+            return Response({"error": "Failed to send email.", "details": str(e)}, status=500)
+
         return Response({
-            "message": "Registration successful! Please use the following link to activate your account",
-            "activation_link": activation_link
+            "message": "Registration successful! Please check your email to activate your account."
         }, status=201)
     
 # Process verification link (activate account)
@@ -82,24 +103,36 @@ class ResendActivationEmailView(APIView):
         
         try:
             user = User.objects.get(email=email)
+
             if user.is_active:
-                return Response({"message": "This account has been activated, no need to resend verification link."}, status=401)
-            
+                return Response({
+                    "message": "This account has already been activated. No need to resend verification link."
+                }, status=401)
+
             # Generate a new verification link
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
-            activation_link = f"http://127.0.0.1:8000/accounts/activate/{uid}/{token}/"
+            activation_link = request.build_absolute_uri(
+                f"/accounts/activate/{uid}/{token}/"
+            )
 
-        
+            # Send the email
+            subject = "Resend Activation Link"
+            message = f"Hi {user.first_name},\n\nPlease click the link below to activate your account:\n{activation_link}\n\nThank you!"
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [user.email]
+
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+
             return Response({
-                "message": "Please use the following link to reactivate your account.",
-                "activation_link": activation_link
-            }, status=201)
-        
-        except User.DoesNotExist:
-            # To avoid information leakage, the same message is sent back.
-            return Response({"message": "Please use the following link to reactivate your account。"})
+                "message": "A new activation email has been sent. Please check your inbox."
+            }, status=200)
 
+        except User.DoesNotExist:
+            # To avoid information leakage, do not reveal if email exists
+            return Response({
+                "message": "A new activation email has been sent. Please check your inbox."
+            }, status=200)
         
 # login API
 class LoginView(APIView):
