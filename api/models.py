@@ -12,6 +12,7 @@ class Event(models.Model):
     target_audience = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     expected_attendees = models.IntegerField()
+    budget = models.IntegerField()
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     is_outdoor = models.BooleanField()
@@ -34,7 +35,7 @@ class EventVersion(models.Model):
 
 class TaskAssignment(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     role = models.CharField(max_length=100)
     description = models.TextField()
     status = models.CharField(max_length=50)  # pending / in_progress / done
