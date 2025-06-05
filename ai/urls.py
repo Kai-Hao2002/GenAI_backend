@@ -1,6 +1,6 @@
 from django.urls import path
-# from .views import GenerateEventView
+from ai.views import GenerateEventAPIView
 
 urlpatterns = [
-    # path("generate/", GenerateEventView.as_view(), name="generate-event"),
+    path('generate-event/', GenerateEventAPIView.as_view(), name='generate-event'),
 ]

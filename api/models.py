@@ -6,100 +6,160 @@ User = get_user_model()
 
 
 class Event(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
-    target_audience = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    expected_attendees = models.IntegerField()
-    budget = models.IntegerField()
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+        ('completed', 'Completed'),
+    ]
+
+    name = models.CharField(max_length=255,null=True,blank=True)
+    description = models.TextField(blank=True)
+    slogan = models.TextField(blank=True)
+    target_audience = models.CharField(max_length=255, blank=True)
+    expected_attendees = models.PositiveIntegerField(null=True, blank=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    is_outdoor = models.BooleanField()
-    weather_risk = models.TextField()
-    status = models.CharField(max_length=50)  # draft / published / completed
-    version_group_id = models.IntegerField()
-    latest_version = models.ForeignKey('EventVersion', on_delete=models.SET_NULL, null=True, related_name='latest_for_event')
-    last_modified = models.DateTimeField()
-    version_number = models.IntegerField()
-    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='modified_events')
+    type = models.CharField(max_length=100)
+    budget = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events_created')
+    latest_version = models.ForeignKey('EventVersion', on_delete=models.SET_NULL, null=True, blank=True, related_name='latest_for_events')
+    last_modified = models.DateTimeField(auto_now=True)
 
 
 class EventVersion(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    version_number = models.IntegerField()
-    changes_summary = models.TextField()
-    created_at = models.DateTimeField()
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='versions')
+    version_number = models.PositiveIntegerField()
+    changes_summary = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     event_snapshot = models.JSONField()
 
 
 class TaskAssignment(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    role = models.CharField(max_length=100)
-    description = models.TextField()
-    status = models.CharField(max_length=50)  # pending / in_progress / done
+    ROLE_CHOICES = [
+        ('planner', 'Planner'),
+        ('participant', 'Participant'),
+        ('admin', 'Admin'),
+    ]
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='task_assignments')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='assignments',
+        null=True,    # 允許欄位為空
+        blank=True    # 允許表單留空
+    )
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    description = models.TextField(blank=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
 
 
+class AssetTemplate(models.Model):
+    TYPE_CHOICES = [
+        ('poster', 'Poster'),
+        ('invitation', 'Invitation'),
+        ('map', 'Map'),
+        ('layout', 'Layout'),
+    ]
+
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    tone = models.CharField(max_length=100)
+    color_scheme = models.CharField(max_length=100, blank=True)
+    font_style = models.CharField(max_length=100, blank=True)
+    layout_style = models.CharField(max_length=100, blank=True)
+    sample_image_url = models.URLField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_public = models.BooleanField(default=True)
+
+
 class VisualAsset(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    type = models.CharField(max_length=100)  # poster / invitation / map / layout
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='visual_assets')
     image_url = models.URLField()
-    generated_by = models.CharField(max_length=50)  # system or user
-    created_at = models.DateTimeField()
+    generated_by = models.CharField(max_length=50)  # e.g. 'system' or 'user'
+    created_at = models.DateTimeField(auto_now_add=True)
+    template = models.ForeignKey('AssetTemplate', on_delete=models.SET_NULL, null=True, blank=True)
+    content = models.TextField(blank=True)
 
 
 class SocialPost(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    platform = models.CharField(max_length=100)  # Facebook / IG / X
+    PLATFORM_CHOICES = [
+        ('facebook', 'Facebook'),
+        ('instagram', 'Instagram'),
+        ('x', 'X'),
+    ]
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='social_posts')
+    platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)
     content = models.TextField()
-    tone = models.CharField(max_length=100)  # light-hearted / mystical / coaching
+    tone = models.CharField(max_length=100)
     scheduled_time = models.DateTimeField()
+    language = models.CharField(max_length=10, default='en')
 
 
 class VenueSuggestion(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='venue_suggestions')
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
-    capacity = models.IntegerField()
+    capacity = models.PositiveIntegerField()
     rental_cost = models.DecimalField(max_digits=10, decimal_places=2)
-    transportation_score = models.IntegerField()  # 1-5
-    map_url = models.URLField()
+    transportation_score = models.PositiveSmallIntegerField()
+    map_url = models.URLField(blank=True)
+    is_outdoor = models.BooleanField(default=False)
 
 
 class CardOfTheDay(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards')
     date = models.DateField()
     content = models.TextField()
-    image_url = models.URLField()
+    image_url = models.URLField(blank=True)
 
 
 class EmailLog(models.Model):
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+        ('queued', 'Queued'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True, blank=True)
     recipient_email = models.EmailField()
-    template_name = models.CharField(max_length=100)  # standard_invite, vip_invite
+    template_name = models.CharField(max_length=100)
+    tone = models.CharField(max_length=100)
     subject = models.CharField(max_length=255)
     body = models.TextField()
     sent_at = models.DateTimeField()
-    status = models.CharField(max_length=50)  # sent / failed / queued
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
 
 
 class EditLog(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    edited_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    edited_at = models.DateTimeField()
-    field_changed = models.CharField(max_length=255)
-    old_value = models.TextField()
-    new_value = models.TextField()
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='edit_logs')
+    edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    edited_at = models.DateTimeField(auto_now_add=True)
+    field_changed = models.CharField(max_length=100)
+    old_value = models.TextField(blank=True)
+    new_value = models.TextField(blank=True)
+
 
 class Registration(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    STATUS_CHOICES = [
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+        ('pending', 'Pending'),
+    ]
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=255)
     email = models.EmailField()
-    phone = models.CharField(max_length=50)
-    comment = models.TextField()
-    registered_at = models.DateTimeField()
-    status = models.CharField(max_length=50)
+    comment = models.TextField(blank=True)
+    registered_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    qr_code_url = models.URLField(blank=True)
+
+

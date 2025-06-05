@@ -1,7 +1,11 @@
 from django.urls import path
-from .views import LoginView, LogoutView
+from .views.Event_views import EventUpdateAPIView, EventDetailAPIView,EventListAPIView,EventDeleteAPIView,SaveEventVersionAPIView
 
 urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    path("events/", EventListAPIView.as_view(), name="event-list"),
+    path("events/<int:pk>/", EventDetailAPIView.as_view(), name="event-detail"),
+    path("events/<int:pk>/update/", EventUpdateAPIView.as_view(), name="event-update"),
+    path("events/<int:pk>/delete/", EventDeleteAPIView.as_view(), name="event-delete"),
+    path('events/<int:pk>/save-version/', SaveEventVersionAPIView.as_view(), name='event-save-version'),
+
 ]
