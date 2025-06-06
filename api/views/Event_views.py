@@ -119,3 +119,30 @@ class SaveEventVersionAPIView(APIView):
         event.save(update_fields=["latest_version_id"])
 
         return Response({"message": "Event version saved", "version_id": version.id}, status=status.HTTP_201_CREATED)
+
+
+
+class EventRevertAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, event_id, version_id):
+        event = get_object_or_404(Event, pk=event_id)
+        version = get_object_or_404(EventVersion, pk=version_id)
+
+        snapshot = version.event_snapshot
+
+        # 更新 Event 欄位
+        event.name = snapshot["name"]
+        event.description = snapshot["description"]
+        event.slogan = snapshot["slogan"]
+        event.target_audience = snapshot["target_audience"]
+        event.expected_attendees = snapshot["expected_attendees"]
+        event.start_time = snapshot["start_time"]
+        event.end_time = snapshot["end_time"]
+        event.type = snapshot["type"]
+        event.budget = snapshot["budget"]
+        event.status = snapshot["status"]
+        event.latest_version = version  # ✅ 正確指定 ForeignKey
+        event.save()
+
+        return Response({"message": "Reverted successfully"}, status=200)
