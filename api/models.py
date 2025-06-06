@@ -106,13 +106,6 @@ class VenueSuggestion(models.Model):
     is_outdoor = models.BooleanField(default=False)
 
 
-class CardOfTheDay(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards')
-    date = models.DateField()
-    content = models.TextField()
-    image_url = models.URLField(blank=True)
-
-
 class EmailLog(models.Model):
     STATUS_CHOICES = [
         ('sent', 'Sent'),
