@@ -44,13 +44,7 @@ class TaskAssignment(models.Model):
     ]
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='task_assignments')
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='assignments',
-        null=True,    # 允許欄位為空
-        blank=True    # 允許表單留空
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignments', null=True, blank=True)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     description = models.TextField(blank=True)
     start_time = models.DateTimeField()
@@ -163,3 +157,20 @@ class Registration(models.Model):
     qr_code_url = models.URLField(blank=True)
 
 
+class EventEditor(models.Model):
+    ROLE_CHOICES = [
+        ('owner', 'Owner'),
+        ('editor', 'Editor'),
+        ('viewer', 'Viewer'),
+    ]
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='editors')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='editable_events')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.event.name} ({self.role})"

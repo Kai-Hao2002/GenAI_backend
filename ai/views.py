@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, time
 from ai.serializers import EventPreferenceSerializer
-from api.models import Event  
+from api.models import Event,EventEditor 
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -43,6 +43,11 @@ class GenerateEventAPIView(APIView):
                 budget=data.get("budget"),
                 status="draft",
                 created_by=request.user
+            )
+            EventEditor.objects.create(
+                event=event,
+                user=request.user,
+                role='owner'
             )
 
              # 把 event.id 加入回傳資料
