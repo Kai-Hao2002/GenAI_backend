@@ -37,15 +37,10 @@ class EventVersion(models.Model):
 
 
 class TaskAssignment(models.Model):
-    ROLE_CHOICES = [
-        ('planner', 'Planner'),
-        ('participant', 'Participant'),
-        ('admin', 'Admin'),
-    ]
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='task_assignments')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignments', null=True, blank=True)
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+    count = models.IntegerField()
+    role = models.CharField(max_length=50)
     description = models.TextField(blank=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()

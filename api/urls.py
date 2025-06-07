@@ -1,6 +1,9 @@
 from django.urls import path
-from .views.Event_views import EventUpdateAPIView, EventDetailAPIView,EventListAPIView,EventDeleteAPIView,SaveEventVersionAPIView,EventRevertAPIView,EventVersionDetailAPIView,EditLogListAPIView,EventEditorListCreateAPIView,EventEditorDetailAPIView
-
+from .views.Event_views import (
+    EventUpdateAPIView, EventDetailAPIView,EventListAPIView,EventDeleteAPIView,SaveEventVersionAPIView,
+    EventRevertAPIView,EventVersionDetailAPIView,EditLogListAPIView,EventEditorListCreateAPIView,EventEditorDetailAPIView,
+)
+from .views.Task_views import TaskAssignmentListCreateAPIView,TaskAssignmentDetailAPIView
 urlpatterns = [
     path("events/", EventListAPIView.as_view(), name="event-list"),
     path("events/<int:pk>/", EventDetailAPIView.as_view(), name="event-detail"),
@@ -13,4 +16,6 @@ urlpatterns = [
     path('events/<int:event_id>/editors/', EventEditorListCreateAPIView.as_view(), name='editor-list-create'),
     path('events/<int:event_id>/editors/<int:user_id>/', EventEditorDetailAPIView.as_view(), name='editor-detail'),
 
+    path('events/<int:event_id>/assignments/', TaskAssignmentListCreateAPIView.as_view(), name='taskassignment-list-create'),
+    path('assignments/<int:pk>/', TaskAssignmentDetailAPIView.as_view(), name='taskassignment-detail'),
 ]
