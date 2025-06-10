@@ -38,8 +38,8 @@ class GenerateEventAPIView(APIView):
 
             event = Event.objects.create(
                 name=ai_response["name"][0],  # 取第一個建議的名稱
-                description=ai_response["description"][0],
-                slogan=ai_response["slogan"],
+                description=ai_response["description"],
+                slogan=ai_response["slogan"][0],
                 target_audience=data.get("target_audience"),
                 expected_attendees=ai_response["expected_attendees"],
                 start_time=start_time,

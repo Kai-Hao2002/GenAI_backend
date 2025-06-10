@@ -8,10 +8,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install django
 pip install django psycopg2-binary
 pip install djangorestframework
-pip install openai   
 pip install python-dotenv
 pip install google-generativeai
-
+pip install openai   
 
 
 python manage.py makemigrations
