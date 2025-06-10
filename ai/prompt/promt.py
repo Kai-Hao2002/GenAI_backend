@@ -9,7 +9,7 @@ def get_event_generation_prompt(event_data: dict) -> str:
         "The slogans should base what the event goal is and atmosphere. \n"
         "Output the entire response strictly in JSON format ONLY, with these keys: "
         "'name' (list of 5 strings), "
-        "'description' (list of 5 strings), "
+        "'description' (string), "
         "'expected_attendees' (integer), "
         "'suggested_time' (string), "
         "'suggested_event_duration' (string), "
