@@ -4,6 +4,7 @@ from .views.Event_views import (
     EventRevertAPIView,EventVersionDetailAPIView,EditLogListAPIView,EventEditorListCreateAPIView,EventEditorDetailAPIView,
 )
 from .views.Task_views import TaskAssignmentListCreateAPIView,TaskAssignmentDetailAPIView
+from .views.Venue_views import VenueSuggestionDetailAPIView,VenueSuggestionListCreateAPIView
 urlpatterns = [
     path("events/", EventListAPIView.as_view(), name="event-list"),
     path("events/<int:pk>/", EventDetailAPIView.as_view(), name="event-detail"),
@@ -18,4 +19,10 @@ urlpatterns = [
 
     path('events/<int:event_id>/assignments/', TaskAssignmentListCreateAPIView.as_view(), name='taskassignment-list-create'),
     path('assignments/<int:pk>/', TaskAssignmentDetailAPIView.as_view(), name='taskassignment-detail'),
+
+
+    path('events/<int:event_id>/venue-suggestions/', VenueSuggestionListCreateAPIView.as_view(), name='venue-suggestion-list-create'),
+    path('venue-suggestions/<int:pk>/', VenueSuggestionDetailAPIView.as_view(), name='venue-suggestion-detail'),
+
+    
 ]
