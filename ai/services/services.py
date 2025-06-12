@@ -3,7 +3,10 @@ import re
 import json
 from dotenv import load_dotenv
 import google.generativeai as genai
-from ai.prompt.promt import get_event_generation_prompt,get_task_assignment_generation_prompt
+from ai.prompt.promt import (
+    get_event_generation_prompt,get_task_assignment_generation_prompt,
+    get_venue_suggestion_generation_prompt
+)
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -28,6 +31,17 @@ def generate_event_from_gemini(event_data: dict) -> dict:
 
 def generate_task_assignment_from_gemini(event_data: dict) -> dict:
     prompt = get_task_assignment_generation_prompt(event_data)
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(prompt)
+
+    try:
+        return parse_gemini_response(response.text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Response is not valid JSON:\n{response.text}\nError: {e}")
+    
+
+def generate_venue_suggestion_from_gemini(event_data: dict) -> dict:
+    prompt = get_venue_suggestion_generation_prompt(event_data)
     model = genai.GenerativeModel("gemini-2.0-flash")
     response = model.generate_content(prompt)
 

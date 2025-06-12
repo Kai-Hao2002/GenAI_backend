@@ -10,7 +10,9 @@ pip install django psycopg2-binary
 pip install djangorestframework
 pip install python-dotenv
 pip install google-generativeai
-pip install openai   
+pip install geopy
+
+
 
 
 python manage.py makemigrations

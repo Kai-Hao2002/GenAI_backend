@@ -32,7 +32,6 @@ def get_event_generation_prompt(event_data: dict) -> str:
 
 def get_task_assignment_generation_prompt(event_data: dict) -> str:
     event = event_data.get("event", {})
-    assignment = event_data.get("task_assignments", {})
 
     system_prompt = (
         "You are a professional event task planning assistant. Based on the provided event data and task assignment preferences, "
@@ -85,10 +84,64 @@ def get_task_assignment_generation_prompt(event_data: dict) -> str:
         f"start_time: {event.get('start_time')}\n"
         f"end_time: {event.get('end_time')}\n"
         f"expected_attendees: {event.get('expected_attendees')}\n"
-        f"group_by_role: {assignment.get('group_by_role')}\n"
-        f"include_count: {assignment.get('include_count')}\n"
-        f"timeline_type: {assignment.get('timeline_type')}\n"
-        f"output_format: {assignment.get('output_format')}\n"
     )
 
     return system_prompt + "\n\n" + user_prompt
+
+def get_venue_suggestion_generation_prompt(event_data: dict) -> str:
+    event = event_data.get("event", {})
+    venue = event_data.get("venue_suggestion", {})
+
+    system_prompt = system_prompt = """
+                                    You are an expert venue recommendation assistant for events.
+
+                                    You will receive:
+                                    - An event object: name, type, expected attendees, time, budget, and audience.
+                                    - A specific user-defined address (center location), search radius (in kilometers), and the location's latitude/longitude.
+
+                                    Your task:
+                                    1. Suggest up to 5 realistic venues within the radius from the provided coordinates that are suitable for the event.
+                                    2. Return results strictly as JSON with a `venue_suggestions` list.
+                                    3. Each venue must include:
+                                        - name
+                                        - capacity
+                                        - transportation_score (1 to 5, based on ease of public access)
+                                        - is_outdoor (true/false)
+
+                                    Important Notes:
+                                    - The venue name must exactly match the official name used on Google Maps to ensure accurate geolocation.
+                                    - Avoid abbreviations or alternative names; use the full official venue name as found on Google Maps.
+                                    - Prefer real-world, well-known, or publicly accessible venues, and also match event type
+                                    - remember to create 5 venues!
+                                    - Rental cost and capacity must reflect reality: if no rental service or information is available, leave the rental_cost blank.
+                                    - Venue type should match the event type:
+
+                                        | Event Type                     | Suitable Venues Examples                        |
+                                        |-------------------------------|--------------------------------------------------|
+                                        | Workshop / Training           | Classrooms, co-working spaces, meeting rooms    |
+                                        | Social / Networking           | Cafés, lounges, rooftop spaces, bars            |
+                                        | Performance / Showcase        | Theaters, plazas, stages, exhibition centers    |
+                                        | Speech / Seminar              | Auditoriums, conference halls, libraries        |
+                                        | Recreational / Entertainment  | Parks, entertainment venues, amusement areas    |
+                                        | Market / Exhibition           | Exhibition halls, gymnasiums, open plazas       |
+                                        | Competition / Challenge       | Gyms, courts, outdoor spaces, arenas            |
+
+                                    - Make sure the venue can realistically accommodate the expected number of attendees.
+                                    - Prioritize venues with high transportation access and matching audience profiles.
+                                    """
+
+
+    user_prompt = (
+        f"Event data:\n"
+        f"Name: {event.get('name')}\n"
+        f"Type: {event.get('type')}\n"
+        f"Expected Attendees: {event.get('expected_attendees')}\n"
+        f"Start Time: {event.get('start_time')}\n"
+        f"End Time: {event.get('end_time')}\n"
+        f"Budget: {event.get('budget')}\n"
+        f"Target Audience: {event.get('target_audience')}\n\n"
+        f"User-defined center location: {venue.get('name')}\n"
+        f"Search radius: {venue.get('radius_km')} km\n"
+    )
+
+    return system_prompt.strip() + "\n\n" + user_prompt.strip()

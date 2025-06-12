@@ -95,7 +95,6 @@ class VenueSuggestion(models.Model):
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     capacity = models.PositiveIntegerField()
-    rental_cost = models.DecimalField(max_digits=10, decimal_places=2)
     transportation_score = models.PositiveSmallIntegerField()
     map_url = models.URLField(blank=True)
     is_outdoor = models.BooleanField(default=False)
