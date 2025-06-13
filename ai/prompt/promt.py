@@ -145,3 +145,52 @@ def get_venue_suggestion_generation_prompt(event_data: dict) -> str:
     )
 
     return system_prompt.strip() + "\n\n" + user_prompt.strip()
+
+
+def get_registration_form_generation_prompt(event_data: dict) -> str:
+
+    event = event_data.get("event", {})
+    venue = event_data.get("venue", {})
+
+    system_prompt = (
+            "You are a professional event registration form designer.\n"
+            "Based on the provided event information, generate a structured JSON object that includes:\n\n"
+            "1. An event_intro: a short and engaging summary (max 2 sentences) that appears at the top of the form to explain why the user should register.\n"
+            "2. A form_title: a concise, action-oriented title for the form (e.g., \"Register for the AI Hackathon!\").\n"
+            "3. A form_fields list: expected input fields that attendees need to fill in. Each field must include:\n"
+            "   - registration_name: a lowercase slug in English (e.g., \"email\", \"team_name\")\n"
+            "   - description: a short user-facing label (can be in the event's language)\n\n"
+            "Guidelines:\n"
+            "- Always include basic fields like name and email.\n"
+            "- Infer additional fields based on the event type, target audience.\n"
+            "- If the event involves teams, consider adding \"team_name\".\n"
+            "- If relevant, include fields like \"school\", \"tshirt_size\", or \"dietary_preferences\".\n\n"
+            "Output must be in **pure JSON** format with no extra explanations or markdown.\n"
+            "Output format:\n"
+            "{\n"
+            "  \"event_intro\": \"string\",\n"
+            "  \"form_title\": \"string\",\n"
+            "  \"form_fields\": [\n"
+            "    { \"registration_name\": \"string\", \"description\": \"string\" },\n"
+            "    ...\n"
+            "  ]\n"
+            "}\n"
+
+    )
+
+    user_prompt = (
+
+        f"event_name: {event.get('event_name')}\n"
+        f"event_type: {event.get('event_type')}\n"
+        f"event_start_time: {event.get('start_time')}\n"
+        f"event_end_time: {event.get('end_time')}\n"
+        f"event_description: {event.get('event_description')}\n"
+        f"expected_attendees: {event.get('expected_attendees')}\n"
+        f"targeted_audiences: {event.get('targeted_audiences')}\n"
+        f"event_slogan: {event.get('event_slogan')}\n"
+        f"event_address_name: {venue.get('name')}\n"
+        f"event_address: {venue.get('address')}\n"
+    )
+
+
+    return system_prompt + "\n\n" + user_prompt

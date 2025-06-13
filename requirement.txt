@@ -11,6 +11,7 @@ pip install djangorestframework
 pip install python-dotenv
 pip install google-generativeai
 pip install geopy
+pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
 
 
@@ -18,5 +19,5 @@ pip install geopy
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
-
+set OAUTHLIB_INSECURE_TRANSPORT=1
 python manage.py createsuperuser

@@ -3,16 +3,18 @@ from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, time
 from ai.serializers import EventPreferenceSerializer
-from api.models import Event,EventEditor,TaskAssignment,VenueSuggestion
+from api.models import Event,EventEditor,TaskAssignment,VenueSuggestion,Registration
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+from ai.google_form_views import load_credentials, create_google_form
 from ai.services.services import (
     generate_event_from_gemini,generate_task_assignment_from_gemini,
-    generate_venue_suggestion_from_gemini
+    generate_venue_suggestion_from_gemini,generate_registration_form_from_gemini
 )
+
 
 User = get_user_model()
 
@@ -212,4 +214,80 @@ class VenueSuggestionGenerationAPIView(APIView):
             return Response(result, status=status.HTTP_200_OK)
 
         except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class RegistrationFormGenerationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, event_id):
+        # 權限檢查
+        if not has_role(request.user, event_id, ['owner', 'editor']):
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        # 取得 Event 資料
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return Response({"error": "Event not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            venue = VenueSuggestion.objects.get(event_id=event_id)
+        except VenueSuggestion.DoesNotExist:
+            return Response({"error": "VenueSuggestion not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # 組合成 event_data 給 Gemini 用
+        event_data = {
+            "event": {
+                "event_id": event.id,
+                "event_name": event.name,
+                "start_time": event.start_time.isoformat() if event.start_time else None,
+                "end_time": event.end_time.isoformat() if event.end_time else None,
+                "expected_attendees": event.expected_attendees,
+                "type": event.type,
+                "slogan" :event.slogan,
+                "targeted_audiences" :event.target_audience,
+            },
+            "venue":{
+                "name": venue.name,
+                "address" : venue.address,
+            }
+        
+        }
+
+        try:
+            # 1. 產生報名表 JSON 資料
+            result = generate_registration_form_from_gemini(event_data)
+
+            # 2. 從 result 取得表單標題與欄位
+            form_title = result.get("form_title", f"Registration for {event.name}")
+            form_fields = result.get("form_fields", [])
+            form_description = result.get("event_intro", f"Registration for {event.description}")
+
+            if not form_fields:
+                return Response({"error": "form_fields is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 3. 取得 Google API 憑證
+            creds = load_credentials()
+            if not creds:
+                return Response({"error": "Google OAuth credentials missing"}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # 4. 用 create_google_form 產生 Google 表單
+            registration_url, edit_url = create_google_form(creds, form_title, form_fields,form_description)
+
+            # 5. 把連結存到資料庫
+            registration, created = Registration.objects.get_or_create(event=event)
+            registration.registration_url = registration_url
+            registration.edit_url = edit_url
+            registration.save()
+
+            # 6. 回傳結果給前端
+            return Response({
+                "registration_url": registration_url,
+                "edit_url": edit_url,
+            }, status=status.HTTP_201_CREATED)
+
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

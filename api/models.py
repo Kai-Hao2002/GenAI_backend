@@ -128,20 +128,9 @@ class EditLog(models.Model):
 
 
 class Registration(models.Model):
-    STATUS_CHOICES = [
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled'),
-        ('pending', 'Pending'),
-    ]
-
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
-    comment = models.TextField(blank=True)
-    registered_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    qr_code_url = models.URLField(blank=True)
+    registration_url = models.URLField(blank=True)
+    edit_url = models.URLField(blank=True)
 
 
 class EventEditor(models.Model):
