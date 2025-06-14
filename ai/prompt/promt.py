@@ -194,3 +194,70 @@ def get_registration_form_generation_prompt(event_data: dict) -> str:
 
 
     return system_prompt + "\n\n" + user_prompt
+
+
+def get_invitation_generation_prompt(event_data: dict) -> str:
+
+    event = event_data.get("event", {})
+    venue = event_data.get("venue", {})
+    invitation = event_data.get("invitation", {})
+
+
+    system_prompt = (
+                    "You are an expert email invitation writer.\n"
+                    "Your task is to generate a personalized, emotionally compelling invitation "
+                    "email subject and body for each recipient based on the provided event and recipient information.\n\n"
+
+                    "Input:\n"
+                    "- Event information: event_id, event_name, event_description, event_slogan, event_type, "
+                    "event_start_time, event_end_time, event_address_name, event_address\n"
+                    "- A list of recipients with their names\n"
+                    "- Writing constraints: words_limit, tone, language\n\n"
+
+                    "Your Goal:\n"
+                    "Write a short email subject and a complete invitation email body for each recipient, "
+                    "using the appropriate tone and language, and respecting the word limit.\n\n"
+
+                    "Guidelines:\n"
+                    "- Personalize each message with the receiver_name in the greeting.\n"
+                    "- Clearly convey what the event is, why it matters, when and where it takes place.\n"
+                    "- Creatively include the slogan if provided.\n"
+                    "- Match the tone: e.g., formal, warm, cheerful, inspirational, or neutral.\n"
+                    "- Use the specified language and invitation style appropriate to it.\n"
+                    "- Body content should fit within the words_limit.\n"
+                    "- Do not include markdown, HTML, or explanations — plain text only.\n\n"
+
+                    "OUTPUT FORMAT (always JSON):\n"
+                    "{\n"
+                    '  "invitation_list": [\n'
+                    "    {\n"
+                    '      "invitation_letter_subject": "string",\n'
+                    '      "invitation_letter_body": "string"\n'
+                    "    },\n"
+                    "    ... (one per recipient)\n"
+                    "  ]\n"
+                    "}\n"
+                )
+
+
+
+    user_prompt = (
+
+        f"event_name: {event.get('event_name')}\n"
+        f"event_description: {event.get('event_description')}\n"
+        f"event_slogan: {event.get('event_slogan')}\n"
+        f"event_type: {event.get('event_type')}\n"
+        f"event_start_time: {event.get('start_time')}\n"
+        f"event_end_time: {event.get('end_time')}\n"
+        f"event_location: {venue.get('name')}\n"
+        f"event_address: {venue.get('address')}\n"
+        f"receiver_name: {invitation.get('receiver_name')}\n"
+        f"words_limit: {invitation.get('words_limit')}\n"
+        f"tone: {invitation.get('tone')}\n"
+        f"language: {invitation.get('language')}\n"
+        
+
+    )
+
+
+    return system_prompt + "\n\n" + user_prompt

@@ -1,5 +1,5 @@
 from django.urls import path
-from ai.views import GenerateEventAPIView,TaskAssignmentGenerationAPIView,VenueSuggestionGenerationAPIView,RegistrationFormGenerationAPIView
+from ai.views import GenerateEventAPIView,TaskAssignmentGenerationAPIView,VenueSuggestionGenerationAPIView,RegistrationFormGenerationAPIView,InvitationGenerationAPIView
 from ai.google_form_views import google_auth_init,google_auth_callback
 
 urlpatterns = [
@@ -7,6 +7,7 @@ urlpatterns = [
     path('generate-tasks/<int:event_id>/', TaskAssignmentGenerationAPIView.as_view(), name='task-generate'),
     path('generate-venues/<int:event_id>/', VenueSuggestionGenerationAPIView.as_view(), name='venue-generate'),
     path('generate-forms/<int:event_id>/', RegistrationFormGenerationAPIView.as_view(), name='form-generate'),
+    path('generate-invitation/<int:event_id>/', InvitationGenerationAPIView.as_view(), name='invitaion-generate'),
 
 
     path('google-auth/', google_auth_init, name='google_auth_init'),

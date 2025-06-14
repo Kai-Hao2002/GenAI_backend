@@ -106,16 +106,13 @@ class EmailLog(models.Model):
         ('failed', 'Failed'),
         ('queued', 'Queued'),
     ]
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True, blank=True)
     recipient_email = models.EmailField()
-    template_name = models.CharField(max_length=100)
-    tone = models.CharField(max_length=100)
+    recipient_name = models.CharField(max_length=25,null=True, blank=True)
     subject = models.CharField(max_length=255)
     body = models.TextField()
-    sent_at = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES,null=True, blank=True)
 
 
 class EditLog(models.Model):
