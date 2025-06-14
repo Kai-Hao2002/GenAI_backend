@@ -309,6 +309,11 @@ class InvitationGenerationAPIView(APIView):
             venue = VenueSuggestion.objects.get(event_id=event_id)
         except VenueSuggestion.DoesNotExist:
             return Response({"error": "VenueSuggestion not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+        try:
+            registeration = Registration.objects.get(event_id=event_id)
+        except Registration.DoesNotExist:
+            return Response({"error": "Registration not found"}, status=status.HTTP_404_NOT_FOUND)
         
         receiver_name = request.data.get("receiver_name", "")
         recipient_email = request.data.get("recipient_email", "")
@@ -329,6 +334,9 @@ class InvitationGenerationAPIView(APIView):
             "venue": {
                 "name": venue.name,
                 "address": venue.address,  
+            },
+            "registeration": {
+                "registeration_url": registeration.registration_url,
             },
             "invitation": {
                 "receiver_name": receiver_name,

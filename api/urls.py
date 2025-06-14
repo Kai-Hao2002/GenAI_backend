@@ -5,6 +5,7 @@ from .views.Event_views import (
 )
 from .views.Task_views import TaskAssignmentListCreateAPIView,TaskAssignmentDetailAPIView
 from .views.Venue_views import VenueSuggestionDetailAPIView,VenueSuggestionListCreateAPIView
+from .views.Invitation_views import EmailLogListCreateAPIView,EmailLogDetailAPIView,EmailLogAutoSendAPIView
 urlpatterns = [
     path("events/", EventListAPIView.as_view(), name="event-list"),
     path("events/<int:pk>/", EventDetailAPIView.as_view(), name="event-detail"),
@@ -25,4 +26,7 @@ urlpatterns = [
     path('venue-suggestions/<int:pk>/', VenueSuggestionDetailAPIView.as_view(), name='venue-suggestion-detail'),
 
     
+    path('events/<int:event_id>/invitation/', EmailLogListCreateAPIView.as_view(), name='invitation-list-create'),
+    path('invitation/<int:pk>/', EmailLogDetailAPIView.as_view(), name='invitation-detail'),
+    path('email/<int:event_id>/', EmailLogAutoSendAPIView.as_view(), name='email')
 ]

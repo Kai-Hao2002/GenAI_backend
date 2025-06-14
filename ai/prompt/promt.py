@@ -201,12 +201,13 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
     event = event_data.get("event", {})
     venue = event_data.get("venue", {})
     invitation = event_data.get("invitation", {})
+    registeration = event_data.get("registeration", {})
 
 
     system_prompt = (
                     "You are an expert email invitation writer.\n"
                     "Your task is to generate a personalized, emotionally compelling invitation "
-                    "email subject and body for each recipient based on the provided event and recipient information.\n\n"
+                    "email subject and body for each recipient based on the provided event, recipient information and also wirite the registeration link.\n\n"
 
                     "Input:\n"
                     "- Event information: event_id, event_name, event_description, event_slogan, event_type, "
@@ -251,6 +252,7 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
         f"event_end_time: {event.get('end_time')}\n"
         f"event_location: {venue.get('name')}\n"
         f"event_address: {venue.get('address')}\n"
+        f"event_registeration_link: {registeration.get('registeration_url')}\n"
         f"receiver_name: {invitation.get('receiver_name')}\n"
         f"words_limit: {invitation.get('words_limit')}\n"
         f"tone: {invitation.get('tone')}\n"
