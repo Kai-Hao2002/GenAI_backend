@@ -12,6 +12,7 @@ pip install python-dotenv
 pip install google-generativeai
 pip install geopy
 pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+pip install python-decouple
 
 
 
@@ -25,3 +26,6 @@ export OAUTHLIB_INSECURE_TRANSPORT=1 //mac
 
 
 python manage.py createsuperuser
+
+.env contains Gimini key、 gmail key
+credentials.json contains google form auth key
