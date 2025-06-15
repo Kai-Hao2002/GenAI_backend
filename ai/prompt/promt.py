@@ -263,3 +263,69 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
 
 
     return system_prompt + "\n\n" + user_prompt
+
+
+def get_social_post_generation_prompt(event_data: dict) -> str:
+
+    event = event_data.get("event", {})
+    venue = event_data.get("venue", {})
+    registeration = event_data.get("registeration", {})
+    social_post = event_data.get("social_post", {})
+    
+
+
+    system_prompt = (
+                    "You are a professional social media copywriting assistant." 
+                    "Your task is to generate creative, engaging, and platform-tailored social media posts based on the provided event details and content strategy preferences.\n\n"
+                    "Your response must follow these guidelines:\n"
+                    "- Return a JSON object in the following format: {\"post_list\": [...]}\n"
+                    "- Each item in post_list should be a post object containing:\n"
+                    "  - \"content\": A social media caption that includes relevant event details (such as event name, date/time, location, and registration link), uses a compelling hook based on the given hook_type, matches the tone, and ends with a clear call to action.\n"
+                    "  - \"hashtag\": A list of custom, relevant hashtags that reflect the event's theme, location, and target audience. Avoid generic or unrelated trending tags.\n\n"
+                    "Other rules to follow:\n"
+                    "- The writing style should adapt to the platform (e.g., Instagram, Facebook, LinkedIn) and tone (e.g., fun, professional, inspirational).\n"
+                    "- If include_emoji is true, use emojis according to the specified emoji_level (low, medium, high) to enhance but not overwhelm the message.\n"
+                    "- Use any provided power_words and hashtag_seeds creatively and naturally in the post.\n"
+                    "- Incorporate all essential event info without sounding robotic or repetitive.\n"
+                    "- Avoid repeating post content across the list.\n\n"
+                    "Output only the final JSON, without any explanation or extra text. For example:\n"
+                    "{\n"
+                    "  \"post_list\": [\n"
+                    "    {\n"
+                    "      \"content\": \"🚀 Ready to unleash your AI potential? Join the AI Hackathon on July 20th at National Taiwan University! 24 hours of coding, creativity, and innovation await. Sign up now 👉 https://example.com/hackathon\",\n"
+                    "      \"hashtag\": [\"#AIHackathon\", \"#CreativeChallenge\", \"#NTU\", \"#Hackathon2025\"]\n"
+                    "    }\n"
+                    "  ]\n"
+                    "}"
+                )
+
+
+
+
+    user_prompt = (
+
+        f"event_name: {event.get('event_name')}\n"
+        f"event_description: {event.get('event_description')}\n"
+        f"event_slogan: {event.get('event_slogan')}\n"
+        f"event_type: {event.get('event_type')}\n"
+        f"event_target_audience: {event.get('target_audience')}\n"
+        f"event_start_time: {event.get('start_time')}\n"
+        f"event_end_time: {event.get('end_time')}\n"
+        f"event_location: {venue.get('name')}\n"
+        f"event_address: {venue.get('address')}\n"
+        f"event_registeration_link: {registeration.get('registeration_url')}\n"
+        f"platform: {social_post.get('platform')}\n"
+        f"tone: {social_post.get('tone')}\n"
+        f"hook_type: {social_post.get('hook_type')}\n"
+        f"words_limit: {social_post.get('words_limit')}\n"
+        f"include_emoji: {social_post.get('include_emoji')}\n"
+        f"emoji_level: {social_post.get('emoji_level')}\n"
+        f"power_words: {social_post.get('power_words')}\n"
+        f"hsashtag_seeds: {social_post.get('hsashtag_seeds')}\n"
+        f"language: {social_post.get('language')}\n"
+        
+
+    )
+
+
+    return system_prompt + "\n\n" + user_prompt

@@ -86,7 +86,6 @@ class SocialPost(models.Model):
     platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)
     content = models.TextField()
     tone = models.CharField(max_length=100)
-    scheduled_time = models.DateTimeField()
     language = models.CharField(max_length=10, default='en')
 
 
