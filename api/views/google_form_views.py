@@ -100,10 +100,8 @@ def create_google_form(creds, form_title, form_fields, form_description):
 
     # 正確填寫用的 URL，注意多了一個 /e/
     registration_url = f"https://docs.google.com/forms/d/{form_id}/viewform"
-    # 編輯用的 URL
-    edit_url = f"https://docs.google.com/forms/d/{form_id}/edit"
 
-    return registration_url, edit_url
+    return registration_url
 
 
 def load_credentials():

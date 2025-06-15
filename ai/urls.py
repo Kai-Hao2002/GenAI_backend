@@ -1,6 +1,6 @@
 from django.urls import path
 from ai.views import GenerateEventAPIView,TaskAssignmentGenerationAPIView,VenueSuggestionGenerationAPIView,RegistrationFormGenerationAPIView,InvitationGenerationAPIView,SocialPostGenerationAPIView
-from ai.google_form_views import google_auth_init,google_auth_callback
+
 
 urlpatterns = [
     path('generate-event/', GenerateEventAPIView.as_view(), name='generate-event'),
@@ -11,6 +11,4 @@ urlpatterns = [
     path('generate-social-post/<int:event_id>/', SocialPostGenerationAPIView.as_view(), name='social-post-generate'),
 
 
-    path('google-auth/', google_auth_init, name='google_auth_init'),
-    path('oauth2callback', google_auth_callback, name='google_auth_callback'),
 ]

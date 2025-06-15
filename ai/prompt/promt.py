@@ -166,13 +166,17 @@ def get_registration_form_generation_prompt(event_data: dict) -> str:
             "- If the event involves teams, consider adding \"team_name\".\n"
             "- If relevant, include fields like \"school\", \"tshirt_size\", or \"dietary_preferences\".\n\n"
             "Output must be in **pure JSON** format with no extra explanations or markdown.\n"
-            "Output format:\n"
+            "OUTPUT FORMAT (always JSON):\n"
             "{\n"
-            "  \"event_intro\": \"string\",\n"
-            "  \"form_title\": \"string\",\n"
-            "  \"form_fields\": [\n"
-            "    { \"registration_name\": \"string\", \"description\": \"string\" },\n"
-            "    ...\n"
+            "  \"registration-list\": [\n"
+            "    {\n"
+            "      \"event_intro\": \"string\",\n"
+            "      \"form_title\": \"string\",\n"
+            "      \"form_fields\": [\n"
+            "        { \"registration_name\": \"string\", \"description\": \"string\" },\n"
+            "        ...\n"
+            "      ]\n"
+            "    }\n"
             "  ]\n"
             "}\n"
 
@@ -201,13 +205,13 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
     event = event_data.get("event", {})
     venue = event_data.get("venue", {})
     invitation = event_data.get("invitation", {})
-    registeration = event_data.get("registeration", {})
+    registration = event_data.get("registration", {})
 
 
     system_prompt = (
                     "You are an expert email invitation writer.\n"
                     "Your task is to generate a personalized, emotionally compelling invitation "
-                    "email subject and body for each recipient based on the provided event, recipient information and also wirite the registeration link.\n\n"
+                    "email subject and body for each recipient based on the provided event, recipient information and also wirite the registration link.\n\n"
 
                     "Input:\n"
                     "- Event information: event_id, event_name, event_description, event_slogan, event_type, "
@@ -252,7 +256,7 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
         f"event_end_time: {event.get('end_time')}\n"
         f"event_location: {venue.get('name')}\n"
         f"event_address: {venue.get('address')}\n"
-        f"event_registeration_link: {registeration.get('registeration_url')}\n"
+        f"event_registration_link: {registration.get('registration_url')}\n"
         f"receiver_name: {invitation.get('receiver_name')}\n"
         f"words_limit: {invitation.get('words_limit')}\n"
         f"tone: {invitation.get('tone')}\n"
@@ -269,7 +273,7 @@ def get_social_post_generation_prompt(event_data: dict) -> str:
 
     event = event_data.get("event", {})
     venue = event_data.get("venue", {})
-    registeration = event_data.get("registeration", {})
+    registration = event_data.get("registration", {})
     social_post = event_data.get("social_post", {})
     
 
@@ -313,7 +317,7 @@ def get_social_post_generation_prompt(event_data: dict) -> str:
         f"event_end_time: {event.get('end_time')}\n"
         f"event_location: {venue.get('name')}\n"
         f"event_address: {venue.get('address')}\n"
-        f"event_registeration_link: {registeration.get('registeration_url')}\n"
+        f"event_registration_link: {registration.get('registration_url')}\n"
         f"platform: {social_post.get('platform')}\n"
         f"tone: {social_post.get('tone')}\n"
         f"hook_type: {social_post.get('hook_type')}\n"

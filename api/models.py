@@ -125,8 +125,13 @@ class EditLog(models.Model):
 
 class Registration(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
-    registration_url = models.URLField(blank=True)
-    edit_url = models.URLField(blank=True)
+    registration_url = models.URLField(blank=True, null=True)
+    form_title = models.CharField(max_length=255,blank=True, null=True)
+    event_intro = models.TextField(blank=True, null=True)
+    form_fields = models.JSONField(blank=True, null=True)
+
+
+
 
 
 class EventEditor(models.Model):
