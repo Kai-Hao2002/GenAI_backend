@@ -37,14 +37,14 @@ class GenerateEventAPIView(APIView):
         try:
             ai_response = generate_event_from_gemini(data)
 
-            # 解析日期字串並轉成當天 00:00 跟 23:59:59
+            # Parse the date string and preset it to 00:00 and 23:59:59 on the current day
             date_str = data.get("date")
             event_date = datetime.strptime(date_str, "%Y-%m-%d").date()
             start_time = datetime.combine(event_date, time(00, 00, 00))  # 00:00:00
             end_time = datetime.combine(event_date, time(23, 59, 59))  # 23:59:59
 
             event = Event.objects.create(
-                name=ai_response["name"][0],  # 取第一個建議的名稱
+                name=ai_response["name"][0],  # default the first list of name
                 description=ai_response["description"],
                 slogan=ai_response["slogan"][0],
                 target_audience=data.get("target_audience"),
@@ -62,11 +62,11 @@ class GenerateEventAPIView(APIView):
                 role='owner'
             )
 
-             # 把 event.id 加入回傳資料
+             
             response_data = ai_response.copy()
             response_data["event_id"] = event.id
 
-            # 回傳全部 AI 建議（前端選擇後再呼叫另存API）
+            
             return Response(response_data , status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -79,17 +79,17 @@ class TaskAssignmentGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, event_id):
-        # 權限檢查
+
         if not has_role(request.user, event_id, ['owner', 'editor']):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
-        # 取得 Event 資料
+ 
         try:
             event = Event.objects.get(id=event_id)
         except Event.DoesNotExist:
             return Response({"error": "Event not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # 組合成 event_data 給 Gemini 用
+
         event_data = {
             "event": {
                 "event_id": event.id,
@@ -103,7 +103,7 @@ class TaskAssignmentGenerationAPIView(APIView):
         }
 
         try:
-            # 丟給 Gemini 產生任務
+    
             result = generate_task_assignment_from_gemini(event_data)
 
             # 儲存到資料庫
@@ -145,11 +145,11 @@ class VenueSuggestionGenerationAPIView(APIView):
             return None, None
 
     def post(self, request, event_id):
-        # 權限檢查
+
         if not has_role(request.user, event_id, ['owner', 'editor']):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
-        # 從資料庫抓 event
+    
         try:
             event = Event.objects.get(id=event_id)
         except Event.DoesNotExist:
@@ -158,7 +158,7 @@ class VenueSuggestionGenerationAPIView(APIView):
         name = request.data.get("name", "")
         radius_km = request.data.get("radius_km", "")
 
-        # 不用geocode地址座標給 Gemini，因為你要只用名稱產生建議（也可改掉這部分）
+        
         input_data = {
             "event": {
                 "event_id": event.id,
@@ -173,7 +173,7 @@ class VenueSuggestionGenerationAPIView(APIView):
             "venue_suggestion": {
                 "radius_km": radius_km,
                 "name": name,
-                # 不送 latitude, longitude，讓 Gemini 只用名字產生場地名稱建議
+               
             }
         }
 
@@ -184,18 +184,18 @@ class VenueSuggestionGenerationAPIView(APIView):
             updated_suggestions = []
 
             for idx, venue in enumerate(suggestions):
-                # 用 geopy 查場地名稱的正確地址與地圖連結
+               
                 address, map_url = self.geocode_place_name(venue.get("name"))
 
-                # 更新場地資訊回傳給前端
+                
                 venue["address"] = address if address else venue.get("address", "")
                 venue["map_url"] = map_url if map_url else venue.get("map_url")
 
                 updated_suggestions.append(venue)
 
-                # 只存第一筆到資料庫
+              
                 if idx == 0:
-                    # 清空舊資料（可選）
+                 
                     VenueSuggestion.objects.filter(event=event).delete()
 
                     VenueSuggestion.objects.create(
@@ -208,7 +208,7 @@ class VenueSuggestionGenerationAPIView(APIView):
                         is_outdoor=venue.get("is_outdoor"),
                     )
 
-            # 更新回傳的結果
+           
             result["venue_suggestions"] = updated_suggestions
 
             return Response(result, status=status.HTTP_200_OK)

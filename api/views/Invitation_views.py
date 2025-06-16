@@ -99,7 +99,7 @@ class EmailLogAutoSendAPIView(APIView):
         for email in email_logs:
             try:
                 subject = email.subject
-                message = f"{email.body}\n\nThank you!"
+                message = f"{email.body}"
                 from_email = settings.DEFAULT_FROM_EMAIL
                 recipient_list = [email.recipient_email]
 

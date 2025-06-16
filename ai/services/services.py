@@ -13,7 +13,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def parse_gemini_response(text: str) -> dict:
-    # 去除可能的 ```json ... ``` Markdown 包裹，只保留純 JSON 字串
+    # Remove possible ```json ... ``` Markdown wrappers and keep only pure JSON strings
     cleaned_text = re.sub(r"^```json\s*|\s*```$", "", text.strip(), flags=re.MULTILINE)
     return json.loads(cleaned_text)
 

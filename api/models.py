@@ -12,15 +12,15 @@ class Event(models.Model):
         ('completed', 'Completed'),
     ]
 
-    name = models.CharField(max_length=255,null=True,blank=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     slogan = models.TextField(blank=True)
     target_audience = models.CharField(max_length=255, blank=True)
-    expected_attendees = models.PositiveIntegerField(null=True, blank=True)
+    expected_attendees = models.PositiveIntegerField()
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     type = models.CharField(max_length=100)
-    budget = models.PositiveIntegerField(null=True, blank=True)
+    budget = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events_created')
     latest_version = models.ForeignKey('EventVersion', on_delete=models.SET_NULL, null=True, blank=True, related_name='latest_for_events')
@@ -30,9 +30,8 @@ class Event(models.Model):
 class EventVersion(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='versions')
     version_number = models.PositiveIntegerField()
-    changes_summary = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL,blank=True, null=True)
     event_snapshot = models.JSONField()
 
 
@@ -61,7 +60,7 @@ class AssetTemplate(models.Model):
     font_style = models.CharField(max_length=100, blank=True)
     layout_style = models.CharField(max_length=100, blank=True)
     sample_image_url = models.URLField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_public = models.BooleanField(default=True)
 
@@ -79,7 +78,7 @@ class SocialPost(models.Model):
     PLATFORM_CHOICES = [
         ('facebook', 'Facebook'),
         ('instagram', 'Instagram'),
-        ('x', 'X'),
+        ('x', 'X'),('threads', 'Threads'),
     ]
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='social_posts')
@@ -105,12 +104,12 @@ class EmailLog(models.Model):
         ('failed', 'Failed'),
         ('queued', 'Queued'),
     ]
-    event = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True, blank=True)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE,related_name='email')
     recipient_email = models.EmailField()
-    recipient_name = models.CharField(max_length=25,null=True, blank=True)
+    recipient_name = models.CharField(max_length=25)
     subject = models.CharField(max_length=255)
     body = models.TextField()
-    sent_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES,null=True, blank=True)
 
 
@@ -126,9 +125,9 @@ class EditLog(models.Model):
 class Registration(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
     registration_url = models.URLField(blank=True, null=True)
-    form_title = models.CharField(max_length=255,blank=True, null=True)
-    event_intro = models.TextField(blank=True, null=True)
-    form_fields = models.JSONField(blank=True, null=True)
+    form_title = models.CharField(max_length=255)
+    event_intro = models.TextField()
+    form_fields = models.JSONField()
 
 
 

@@ -1,7 +1,8 @@
+
 def get_event_generation_prompt(event_data: dict) -> str:
     system_prompt = (
-        "You are a skilled activities planner specializing in student events.\n"
-        "Given an input JSON describing the event goal, type, date, budget, target audience, and atmosphere, "
+        "You are a skilled activities planner.\n"
+        "Given an input JSON describing the event goal, type, date, budget, audience, and atmosphere, "
         "brainstorm and generate exactly 5 creative event names as a list, and detailed event description, and five slogans,"
         "suggested event duration, suggested time, expected attendees.\n"
         "Event names must be imaginative and clearly connected to the event's goal, audience, type, and atmosphere.\n"
@@ -16,8 +17,6 @@ def get_event_generation_prompt(event_data: dict) -> str:
         "'slogan' (string).\n"
         "Do NOT include any explanations, extra text, or formatting beyond the JSON response.\n"
     )
-    #slogan 產出幾乎一樣
-
 
     user_prompt = (
         f"Event goal: {event_data.get('goal')}\n"
@@ -25,7 +24,7 @@ def get_event_generation_prompt(event_data: dict) -> str:
         f"Date: {event_data.get('date')}\n"
         f"Budget: {event_data.get('budget')}\n"
         f"Audience: {event_data.get('target_audience')}\n"
-        f"Event atmosphere: {event_data.get('atmosphere')}\n"
+        f"Atmosphere: {event_data.get('atmosphere')}\n"
     )
 
     return system_prompt + "\n" + user_prompt
@@ -211,11 +210,11 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
     system_prompt = (
                     "You are an expert email invitation writer.\n"
                     "Your task is to generate a personalized, emotionally compelling invitation "
-                    "email subject and body for each recipient based on the provided event, recipient information and also wirite the registration link.\n\n"
+                    "email subject and body for each recipient based on the provided event, recipient information and registration link.\n\n"
 
                     "Input:\n"
-                    "- Event information: event_id, event_name, event_description, event_slogan, event_type, "
-                    "event_start_time, event_end_time, event_address_name, event_address\n"
+                    "- Event information: event_name, event_description, event_slogan, event_type, "
+                    "event_start_time, event_end_time, event_location, event_address\n"
                     "- A list of recipients with their names\n"
                     "- Writing constraints: words_limit, tone, language\n\n"
 
@@ -225,9 +224,10 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
 
                     "Guidelines:\n"
                     "- Personalize each message with the receiver_name in the greeting.\n"
+                    "- Please remember to greeting and signature Event Organizer in the end of body.\n"
                     "- Clearly convey what the event is, why it matters, when and where it takes place.\n"
                     "- Creatively include the slogan if provided.\n"
-                    "- Match the tone: e.g., formal, warm, cheerful, inspirational, or neutral.\n"
+                    "- Match the tone: e.g., formal, Semi-formal / Professional, Friendly / Warm, Casual / Informal, Persuasive / Promotional.\n"
                     "- Use the specified language and invitation style appropriate to it.\n"
                     "- Body content should fit within the words_limit.\n"
                     "- Do not include markdown, HTML, or explanations — plain text only.\n\n"

@@ -67,7 +67,7 @@ def create_google_form(creds, form_title, form_fields, form_description):
     # 2. 用 batchUpdate 更新 description，並新增題目
     requests = []
 
-    # 更新 description
+    # update description
     requests.append({
         "updateFormInfo": {
             "info": {
@@ -98,7 +98,7 @@ def create_google_form(creds, form_title, form_fields, form_description):
 
     service.forms().batchUpdate(formId=form_id, body={"requests": requests}).execute()
 
-    # 正確填寫用的 URL，注意多了一個 /e/
+
     registration_url = f"https://docs.google.com/forms/d/{form_id}/viewform"
 
     return registration_url

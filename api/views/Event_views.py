@@ -88,6 +88,13 @@ class EventDeleteAPIView(APIView):
 
         event.versions.all().delete()
         event.edit_logs.all().delete()
+        event.task_assignments.all().delete()
+        event.visual_assets.all().delete()
+        event.social_posts.all().delete()
+        event.venue_suggestions.all().delete()
+        event.email.all().delete()
+        event.registrations.all().delete()
+        event.editors.all().delete()
         event.delete()
 
         return Response({"message": "Event deleted"}, status=204)
@@ -110,7 +117,6 @@ class SaveEventVersionAPIView(APIView):
         version = EventVersion.objects.create(
             event=event,
             version_number=next_version_number,
-            changes_summary=request.data.get("changes_summary", ""),
             created_by=request.user,
             event_snapshot=snapshot
         )
@@ -141,8 +147,10 @@ class EventRevertAPIView(APIView):
 
         event.latest_version = version
         event.save()
+        serializer = EventSerializer(event)
 
-        return Response({"message": "Reverted successfully"}, status=200)
+        return Response({"message": "Reverted successfully","event": serializer.data}, status=200)
+
 
 
 class EventVersionDetailAPIView(APIView):

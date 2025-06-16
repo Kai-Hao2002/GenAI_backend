@@ -59,7 +59,7 @@ class TaskAssignmentDetailAPIView(APIView):
         if not assignment:
             return Response({"error": "Not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
 
-        # 僅 owner 或 editor 可修改
+        # only owner or editor can edit
         if not has_role(request.user, assignment.event.id, ['owner', 'editor']):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -75,7 +75,7 @@ class TaskAssignmentDetailAPIView(APIView):
         if not assignment:
             return Response({"error": "Not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
 
-        # 僅 owner 可刪除
+        # only owner can delete
         if not has_role(request.user, assignment.event.id, ['owner']):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
