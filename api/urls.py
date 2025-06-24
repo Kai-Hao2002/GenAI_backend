@@ -10,6 +10,7 @@ from .views.Invitation_views import EmailLogListCreateAPIView,EmailLogDetailAPIV
 from .views.SocialPost_views import SocialPostDetailAPIView,SocialPostListCreateAPIView
 from .views.Registration_views import GoogleFormCreateAPIView,RegistrationDetailAPIView,RegistrationListCreateAPIView
 urlpatterns = [
+    #event
     path("events/", EventListAPIView.as_view(), name="event-list"),
     path("events/<int:pk>/", EventDetailAPIView.as_view(), name="event-detail"),
     path("events/<int:pk>/update/", EventUpdateAPIView.as_view(), name="event-update"),
@@ -21,23 +22,24 @@ urlpatterns = [
     path('events/<int:event_id>/editors/', EventEditorListCreateAPIView.as_view(), name='editor-list-create'),
     path('events/<int:event_id>/editors/<int:user_id>/', EventEditorDetailAPIView.as_view(), name='editor-detail'),
 
+    #assignments
     path('events/<int:event_id>/assignments/', TaskAssignmentListCreateAPIView.as_view(), name='taskassignment-list-create'),
     path('assignments/<int:pk>/', TaskAssignmentDetailAPIView.as_view(), name='taskassignment-detail'),
 
-
+    #venue-suggestions
     path('events/<int:event_id>/venue-suggestions/', VenueSuggestionListCreateAPIView.as_view(), name='venue-suggestion-list-create'),
     path('venue-suggestions/<int:pk>/', VenueSuggestionDetailAPIView.as_view(), name='venue-suggestion-detail'),
 
-    
+    #email
     path('events/<int:event_id>/invitation/', EmailLogListCreateAPIView.as_view(), name='invitation-list-create'),
     path('invitation/<int:pk>/', EmailLogDetailAPIView.as_view(), name='invitation-detail'),
     path('email/<int:event_id>/', EmailLogAutoSendAPIView.as_view(), name='email'),
 
-
+    #social-posts
     path('events/<int:event_id>/social-posts/', SocialPostListCreateAPIView.as_view(), name='social-posts-list-create'),
     path('social-posts/<int:pk>/', SocialPostDetailAPIView.as_view(), name='social-posts-detail'),
 
-
+    #registration-form
     path('events/<int:event_id>/generate-google-form/', GoogleFormCreateAPIView.as_view(), name='generate-google-form-create'),
     path('google-auth/', google_auth_init, name='google_auth_init'),
     path('oauth2callback', google_auth_callback, name='google_auth_callback'),

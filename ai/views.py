@@ -1,18 +1,25 @@
+import base64
+import os
+from uuid import uuid4
+import qrcode
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, time
 from ai.serializers import EventPreferenceSerializer
-from api.models import Event,EventEditor,TaskAssignment,VenueSuggestion,Registration,EmailLog,SocialPost
+from api.models import Event,EventEditor,TaskAssignment,VenueSuggestion,Registration,EmailLog,SocialPost,VisualAsset
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+from django.utils.timezone import localtime
 from ai.services.services import (
     generate_event_from_gemini,generate_task_assignment_from_gemini,
     generate_venue_suggestion_from_gemini,generate_registration_form_from_gemini,
-    generate_invitation_from_gemini,generate_social_post_gemini
+    generate_invitation_from_gemini,generate_social_post_gemini,generate_poster_text_gemini,
+    generate_poster_image_openai
 )
 
 
@@ -23,6 +30,7 @@ User = get_user_model()
 def has_role(user, event_id, roles):
     return EventEditor.objects.filter(event_id=event_id, user=user, role__in=roles).exists()
 
+# Create Event
 class GenerateEventAPIView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -75,6 +83,7 @@ class GenerateEventAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+# Create TaskAssighnment
 class TaskAssignmentGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -106,9 +115,9 @@ class TaskAssignmentGenerationAPIView(APIView):
     
             result = generate_task_assignment_from_gemini(event_data)
 
-            # 儲存到資料庫
+            # save in data base
             task_data_list = result.get("task_summary_by_role", [])
-            TaskAssignment.objects.filter(event=event).delete()  # 清除原本的（可選）
+            TaskAssignment.objects.filter(event=event).delete()  
             for task in task_data_list:
                 TaskAssignment.objects.create(
                     event=event,
@@ -125,7 +134,7 @@ class TaskAssignmentGenerationAPIView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-
+# Create VenueSuggestion
 class VenueSuggestionGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -216,6 +225,7 @@ class VenueSuggestionGenerationAPIView(APIView):
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Create RegistrationFormField
 class RegistrationFormGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -263,6 +273,7 @@ class RegistrationFormGenerationAPIView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Create email invitation letters
 class InvitationGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -334,7 +345,7 @@ class InvitationGenerationAPIView(APIView):
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+# Create posts on the Social media 
 class SocialPostGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -364,7 +375,7 @@ class SocialPostGenerationAPIView(APIView):
         include_emoji = request.data.get("include_emoji", "")
         emoji_level = request.data.get("emoji_level", "")
         power_words = request.data.get("power_words", "")
-        hsashtag_seeds = request.data.get("hsashtag_seeds", "")
+        hashtag_seeds = request.data.get("hashtag_seeds", "")
         language = request.data.get("language", "")
 
         event_data = {
@@ -393,13 +404,14 @@ class SocialPostGenerationAPIView(APIView):
                 "include_emoji": include_emoji,  
                 "emoji_level": emoji_level,  
                 "power_words": power_words,  
-                "hsashtag_seeds": hsashtag_seeds,  
+                "hashtag_seeds": hashtag_seeds,  
                 "language": language, 
             }
         }
 
         try:
             result = generate_social_post_gemini(event_data)
+            SocialPost.objects.filter(event=event).delete()
 
             post_list = result.get("post_list", [])
             for post in post_list:
@@ -412,6 +424,104 @@ class SocialPostGenerationAPIView(APIView):
                 )
 
             return Response(result, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Create poster
+class PosterGenerationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, event_id):
+        if not has_role(request.user, event_id, ['owner', 'editor']):
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            event = Event.objects.get(id=event_id)
+            venue = VenueSuggestion.objects.get(event_id=event_id)
+        except (Event.DoesNotExist, VenueSuggestion.DoesNotExist):
+            return Response({"error": "Event or venue not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        
+        tone = request.data.get("tone", "")
+        color_scheme = request.data.get("color_scheme", "")
+        layout_style = request.data.get("layout_style", "")
+        font_style = request.data.get("font_style", "")
+        language = request.data.get("language", "")
+
+        
+        event_data = {
+            "event": {
+                "event_id": event.id,
+                "event_name": event.name,
+                "event_description": event.description,
+                "event_slogan": event.slogan,
+                "event_target_audience": event.target_audience,
+                "event_type": event.type,
+                "start_time": localtime(event.start_time).strftime('%Y-%m-%d %H:%M'),
+                "end_time": localtime(event.end_time).strftime('%Y-%m-%d %H:%M'),
+            },
+            "venue": {
+                "name": venue.name,
+                "address": venue.address,
+            },
+            "poster": {
+                "language": language,
+                "tone": tone,
+                "color_scheme": color_scheme,
+                "layout_style": layout_style,
+                "font_style": font_style,
+            }
+        }
+
+        try:
+        
+            poster_text = generate_poster_text_gemini(event_data)
+            headline = poster_text["headline"]
+            subheadline = poster_text["subheadline"]
+
+           
+            event_data["poster_text"] = {
+                "headline": headline,
+                "subheadline": subheadline
+            }
+
+         
+            image_base64 = generate_poster_image_openai(event_data)
+
+    
+            img_bytes = base64.b64decode(image_base64)
+            folder = os.path.join(settings.MEDIA_ROOT, "generated_posters")
+            os.makedirs(folder, exist_ok=True)
+            filename = f"{uuid4().hex}.png"
+            filepath = os.path.join(folder, filename)
+
+            with open(filepath, "wb") as f:
+                f.write(img_bytes)
+
+            media_url = f"{settings.MEDIA_URL}generated_posters/{filename}"
+
+            VisualAsset.objects.filter(event=event).delete()
+            visual_asset = VisualAsset.objects.create(
+                event=event,
+                image_url=media_url,
+                headline=headline,
+                subheadline=subheadline,
+                tone=tone,
+                color_scheme=color_scheme,
+                font_style=font_style,
+                layout_style=layout_style,
+            )
+
+            return Response({
+                "image_url": media_url,
+                "filename": filename,
+                "local_path": filepath,
+                "headline": headline,
+                "subheadline": subheadline,
+                "visual_asset_id": visual_asset.id
+            }, status=status.HTTP_200_OK)
 
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

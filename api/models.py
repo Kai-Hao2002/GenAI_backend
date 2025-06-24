@@ -45,34 +45,16 @@ class TaskAssignment(models.Model):
     end_time = models.DateTimeField()
 
 
-class AssetTemplate(models.Model):
-    TYPE_CHOICES = [
-        ('poster', 'Poster'),
-        ('invitation', 'Invitation'),
-        ('map', 'Map'),
-        ('layout', 'Layout'),
-    ]
-
-    name = models.CharField(max_length=255)
-    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+class VisualAsset(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='visual_assets')
+    image_url = models.URLField()
+    headline = models.TextField(blank=True)
+    subheadline = models.TextField(blank=True)
     tone = models.CharField(max_length=100)
     color_scheme = models.CharField(max_length=100, blank=True)
     font_style = models.CharField(max_length=100, blank=True)
     layout_style = models.CharField(max_length=100, blank=True)
-    sample_image_url = models.URLField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_public = models.BooleanField(default=True)
-
-
-class VisualAsset(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='visual_assets')
-    image_url = models.URLField()
-    generated_by = models.CharField(max_length=50)  # e.g. 'system' or 'user'
-    created_at = models.DateTimeField(auto_now_add=True)
-    template = models.ForeignKey('AssetTemplate', on_delete=models.SET_NULL, null=True, blank=True)
-    content = models.TextField(blank=True)
-
 
 class SocialPost(models.Model):
     PLATFORM_CHOICES = [
@@ -128,9 +110,6 @@ class Registration(models.Model):
     form_title = models.CharField(max_length=255)
     event_intro = models.TextField()
     form_fields = models.JSONField()
-
-
-
 
 
 class EventEditor(models.Model):

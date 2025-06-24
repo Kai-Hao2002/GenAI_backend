@@ -1,22 +1,22 @@
-
+#Functions contains system prompt and user prompt
 def get_event_generation_prompt(event_data: dict) -> str:
     system_prompt = (
-        "You are a skilled activities planner.\n"
-        "Given an input JSON describing the event goal, type, date, budget, audience, and atmosphere, "
-        "brainstorm and generate exactly 5 creative event names as a list, and detailed event description, and five slogans,"
-        "suggested event duration, suggested time, expected attendees.\n"
-        "Event names must be imaginative and clearly connected to the event's goal, audience, type, and atmosphere.\n"
-        "The description should cover the event's purpose, vibe, and benefits for attendees, and donot contains event name\n"
-        "The slogans should base what the event goal is and atmosphere. \n"
-        "Output the entire response strictly in JSON format ONLY, with these keys: "
-        "'name' (list of 5 strings), "
-        "'description' (string), "
-        "'expected_attendees' (integer), "
-        "'suggested_time' (string), "
-        "'suggested_event_duration' (string), "
-        "'slogan' (string).\n"
-        "Do NOT include any explanations, extra text, or formatting beyond the JSON response.\n"
-    )
+                    """
+                    You are a skilled activities planner.
+
+                    Given an input JSON describing the event goal, type, date, budget, audience, and atmosphere, generate the following items strictly as a JSON object:
+
+                    - "name": a list of exactly 5 creative and imaginative event names, each clearly connected to the event's goal, audience, type, and atmosphere.
+                    - "description": a detailed event description as a single string that covers the event's purpose, vibe, and benefits for attendees. Do NOT include or mention any event names in this description.
+                    - "expected_attendees": an integer representing the expected number of attendees.
+                    - "suggested_time": a string specifying the suggested event start and end time in "HH:MM - HH:MM" format.
+                    - "suggested_event_duration": a string describing the duration of the event, e.g. "3 hours".
+                    - "slogan": a list of exactly 5 slogans, each based on the event goal and atmosphere.
+
+                    Output ONLY the JSON object exactly in the described structure. Do NOT include any explanations, additional text, or formatting outside the JSON.
+
+                    """
+                    )
 
     user_prompt = (
         f"Event goal: {event_data.get('goal')}\n"
@@ -33,48 +33,53 @@ def get_task_assignment_generation_prompt(event_data: dict) -> str:
     event = event_data.get("event", {})
 
     system_prompt = (
-        "You are a professional event task planning assistant. Based on the provided event data and task assignment preferences, "
-        "generate a list of recommended roles (tasks) for the event.\n\n"
-        "You must infer appropriate roles and estimated staff counts depending on the **event type** and **expected number of attendees**. "
-        "Use the specified **timeline type** to format time fields. Return the result in **pure JSON format only**, with no explanations or extra text.\n\n"
+        """
+            You are a professional event task planning assistant.
 
-        "-----------------------------------------\n"
-        "ROLE ASSIGNMENT LOGIC:\n"
-        "1. Use the following role sets depending on the event type:\n"
-        "- \"Workshop / Training\": [\"facilitator\", \"assistant\", \"tech_support\", \"material_handler\", \"time_keeper\"]\n"
-        "- \"Social / Networking\": [\"host\", \"greeter\", \"logistics\", \"photographer\", \"music_dj\"]\n"
-        "- \"Performance / Showcase\": [\"stage_manager\", \"lighting\", \"sound_engineer\", \"usher\", \"safety_officer\"]\n"
-        "- \"Speech / Seminar\": [\"emcee\", \"speaker_handler\", \"registration_staff\", \"audiovisual_support\", \"time_keeper\"]\n"
-        "- \"Recreational / Entertainment\": [\"activity_leader\", \"crowd_control\", \"logistics\", \"vendor_liaison\", \"security\"]\n"
-        "- \"Market / Exhibition\": [\"booth_coordinator\", \"vendor_helper\", \"floor_manager\", \"map_distributor\", \"ticketing\"]\n"
-        "- \"Competition / Challenge\": [\"referee\", \"score_keeper\", \"participant_handler\", \"tech_support\", \"logistics\"]\n\n"
+            Given event data including event_id, event_name, type, start_time, end_time, expected_attendees, and timeline_type, generate a JSON object recommending event roles and staffing counts.
 
-        "2. Estimate staff count based on expected_attendees:\n"
-        "- Usually 1 staff per 50 attendees for general roles.\n"
-        "- Technical roles and hosts may have fixed counts (e.g. 1 or 2).\n"
-        "- Use reasonable judgment.\n\n"
+            - Assign roles based on event type, using these predefined sets:
+            * Workshop / Training: ["facilitator", "assistant", "tech_support", "material_handler", "time_keeper"]
+            * Social / Networking: ["host", "greeter", "logistics", "photographer", "music_dj"]
+            * Performance / Showcase: ["stage_manager", "lighting", "sound_engineer", "usher", "safety_officer"]
+            * Speech / Seminar: ["emcee", "speaker_handler", "registration_staff", "audiovisual_support", "time_keeper"]
+            * Recreational / Entertainment: ["activity_leader", "crowd_control", "logistics", "vendor_liaison", "security"]
+            * Market / Exhibition: ["booth_coordinator", "vendor_helper", "floor_manager", "map_distributor", "ticketing"]
+            * Competition / Challenge: ["referee", "score_keeper", "participant_handler", "tech_support", "logistics"]
 
-        "3. Time format:\n"
-        "- If \"timeline_type\" is \"absolute\", use \"start_time\" and \"end_time\" in ISO 8601 format.\n"
-        "- If no start time is provided, omit time fields and add a top-level key:\n"
-        "  \"note\": \"Start time missing\"\n\n"
+            - Estimate staff counts based on expected_attendees:
+            * General roles: approximately 1 staff per 50 attendees, rounded sensibly.
+            * Technical and host roles: fixed small counts (1-3 staff).
+            
+            - For each role, assign "start_time" and "end_time" as the event's overall start_time and end_time, indicating the time period each staff member is expected to work.
 
-        "-----------------------------------------\n"
-        "OUTPUT FORMAT (always JSON):\n"
-        "{\n"
-        "  \"event_id\": <event id>,\n"
-        "  \"task_summary_by_role\": [\n"
-        "    {\n"
-        "      \"role\": \"<role_code>\",\n"
-        "      \"description\": \"<short English task description>\",\n"
-        "      \"count\": <estimated_staff_count>,\n"
-        "      \"start_time\": \"...\",  // optional\n"
-        "      \"end_time\": \"...\"      // optional\n"
-        "    }\n"
-        "  ],\n"
-        "  \"note\": \"Start time missing\"  // if applicable\n"
-        "}\n"
-    )
+            - If the timeline_type is "absolute", use ISO 8601 format for all time fields.
+
+            - If start_time is missing, omit all time fields in each role and add a top-level key "note" with value "Start time missing".
+
+            OUTPUT FORMAT:
+
+            Return exactly one JSON object with the following structure:
+
+            {
+            "event_id": <string or number>,
+            "task_summary_by_role": [
+                {
+                "role": "<role_code>",
+                "description": "<short English task description>",
+                "count": <integer>,
+                "start_time": "<ISO 8601 timestamp>",  // omit if start_time missing
+                "end_time": "<ISO 8601 timestamp>"     // omit if start_time missing
+                },
+                ...
+            ],
+            "note": "Start time missing"  // include only if start_time is missing
+            }
+
+            Do NOT include any explanations, comments, or text outside this JSON object. Do NOT include JSON comments or invalid JSON syntax.
+
+        """
+        )
 
     user_prompt = (
         f"event_id: {event.get('event_id')}\n"
@@ -91,7 +96,7 @@ def get_venue_suggestion_generation_prompt(event_data: dict) -> str:
     event = event_data.get("event", {})
     venue = event_data.get("venue_suggestion", {})
 
-    system_prompt = system_prompt = """
+    system_prompt =                 """
                                     You are an expert venue recommendation assistant for events.
 
                                     You will receive:
@@ -151,35 +156,52 @@ def get_registration_form_generation_prompt(event_data: dict) -> str:
     event = event_data.get("event", {})
     venue = event_data.get("venue", {})
 
-    system_prompt = (
-            "You are a professional event registration form designer.\n"
-            "Based on the provided event information, generate a structured JSON object that includes:\n\n"
-            "1. An event_intro: a short and engaging summary (max 2 sentences) that appears at the top of the form to explain why the user should register.\n"
-            "2. A form_title: a concise, action-oriented title for the form (e.g., \"Register for the AI Hackathon!\").\n"
-            "3. A form_fields list: expected input fields that attendees need to fill in. Each field must include:\n"
-            "   - registration_name: a lowercase slug in English (e.g., \"email\", \"team_name\")\n"
-            "   - description: a short user-facing label (can be in the event's language)\n\n"
-            "Guidelines:\n"
-            "- Always include basic fields like name and email.\n"
-            "- Infer additional fields based on the event type, target audience.\n"
-            "- If the event involves teams, consider adding \"team_name\".\n"
-            "- If relevant, include fields like \"school\", \"tshirt_size\", or \"dietary_preferences\".\n\n"
-            "Output must be in **pure JSON** format with no extra explanations or markdown.\n"
-            "OUTPUT FORMAT (always JSON):\n"
-            "{\n"
-            "  \"registration-list\": [\n"
-            "    {\n"
-            "      \"event_intro\": \"string\",\n"
-            "      \"form_title\": \"string\",\n"
-            "      \"form_fields\": [\n"
-            "        { \"registration_name\": \"string\", \"description\": \"string\" },\n"
-            "        ...\n"
-            "      ]\n"
-            "    }\n"
-            "  ]\n"
-            "}\n"
+    system_prompt = """
+                    You are a professional event registration form designer.
 
-    )
+                    Your task is to generate a structured JSON object representing a registration form, based on the provided event information.
+
+                    The output JSON object must contain:
+
+                    1. "event_intro": A short, engaging summary (maximum 2 sentences) that appears at the top of the form to encourage registration.
+                    2. "form_title": A concise, action-oriented title that includes the event name (e.g., "Register for the AI Hackathon!").
+                    3. "form_fields": A list of fields that attendees must fill in. Each field is an object with the following keys:
+                    - "registration_name": a lowercase English slug using only letters and underscores (e.g., "email", "team_name").
+                    - "description": a short, user-facing label (can be in the event’s language).
+                    - "type": the input type, such as "text", "email", "number", or "select".
+                    - "required": a boolean indicating whether the field is mandatory.
+
+                    Field generation rules:
+                    - Always include the basic required fields: "first_name", "last_name", and "email".
+                    - Infer other relevant fields based on the event_type and target audience.
+                    * For team-based events, include "team_name".
+                    * For student-focused events, include "school", "major", and "graduation_year".
+                    * For outdoor or merchandise-based events, include "tshirt_size".
+                    * For food or accessibility-related contexts, include "dietary_preferences" and "accessibility_needs" if applicable.
+
+                    Output Rules:
+                    - Return **only** a valid JSON object in the following format.
+                    - Do NOT include any extra explanation, markdown, comments, or text.
+
+                    OUTPUT FORMAT (pure JSON):
+
+                    {
+                    "registration-list": [
+                        {
+                        "event_intro": "string",
+                        "form_title": "string",
+                        "form_fields": [
+                            {
+                            "registration_name": "string",
+                            "description": "string"
+                            },
+                            ...
+                        ]
+                        }
+                    ]
+                    }
+                    """
+
 
     user_prompt = (
 
@@ -207,42 +229,42 @@ def get_invitation_generation_prompt(event_data: dict) -> str:
     registration = event_data.get("registration", {})
 
 
-    system_prompt = (
-                    "You are an expert email invitation writer.\n"
-                    "Your task is to generate a personalized, emotionally compelling invitation "
-                    "email subject and body for each recipient based on the provided event, recipient information and registration link.\n\n"
+    system_prompt = """
+                    You are an expert email invitation writer.
+                    Your task is to generate a personalized, emotionally compelling invitation email subject and body for each recipient.
 
-                    "Input:\n"
-                    "- Event information: event_name, event_description, event_slogan, event_type, "
-                    "event_start_time, event_end_time, event_location, event_address\n"
-                    "- A list of recipients with their names\n"
-                    "- Writing constraints: words_limit, tone, language\n\n"
+                    Input includes:
+                    - Event information: event_name, event_description, event_slogan, event_type, event_start_time, event_end_time, event_location, event_address, event_registration_link
+                    - A list of recipients, each with their name
+                    - Writing constraints: words_limit, tone, and language
 
-                    "Your Goal:\n"
-                    "Write a short email subject and a complete invitation email body for each recipient, "
-                    "using the appropriate tone and language, and respecting the word limit.\n\n"
+                    Your Goal:
+                    - For each recipient, write:
+                    • An engaging subject line.
+                    • A personalized email body with their name.
+                    - The body must clearly explain what the event is, why it matters, when and where it happens.
+                    - Use the event slogan creatively within the message if provided.
+                    - Include the registration link in the email body in a natural way.
+                    - Match the specified tone (e.g., Formal, Semi-formal, Friendly, Casual, Persuasive).
+                    - Write in the given language.
+                    - Keep the email body within the specified words_limit.
+                    - The email must:
+                    • Begin with a greeting using the recipient's name.
+                    • End with a signature from the Event Organizer or event team.
+                    - Do NOT include any markdown, HTML, bullet points, or explanations — plain text only.
 
-                    "Guidelines:\n"
-                    "- Personalize each message with the receiver_name in the greeting.\n"
-                    "- Please remember to greeting and signature Event Organizer in the end of body.\n"
-                    "- Clearly convey what the event is, why it matters, when and where it takes place.\n"
-                    "- Creatively include the slogan if provided.\n"
-                    "- Match the tone: e.g., formal, Semi-formal / Professional, Friendly / Warm, Casual / Informal, Persuasive / Promotional.\n"
-                    "- Use the specified language and invitation style appropriate to it.\n"
-                    "- Body content should fit within the words_limit.\n"
-                    "- Do not include markdown, HTML, or explanations — plain text only.\n\n"
+                    OUTPUT FORMAT (always JSON):
+                    {
+                    "invitation_list": [
+                        {
+                        "invitation_letter_subject": "string",
+                        "invitation_letter_body": "string"
+                        },
+                        ... (one per recipient)
+                    ]
+                    }
+                    """
 
-                    "OUTPUT FORMAT (always JSON):\n"
-                    "{\n"
-                    '  "invitation_list": [\n'
-                    "    {\n"
-                    '      "invitation_letter_subject": "string",\n'
-                    '      "invitation_letter_body": "string"\n'
-                    "    },\n"
-                    "    ... (one per recipient)\n"
-                    "  ]\n"
-                    "}\n"
-                )
 
 
 
@@ -278,33 +300,46 @@ def get_social_post_generation_prompt(event_data: dict) -> str:
     
 
 
-    system_prompt = (
-                    "You are a professional social media copywriting assistant." 
-                    "Your task is to generate creative, engaging, and platform-tailored social media posts based on the provided event details and content strategy preferences.\n\n"
-                    "Your response must follow these guidelines:\n"
-                    "- Return a JSON object in the following format: {\"post_list\": [...]}\n"
-                    "- Each item in post_list should be a post object containing:\n"
-                    "  - \"content\": A social media caption that includes relevant event details (such as event name, date/time, location, and registration link), uses a compelling hook based on the given hook_type, matches the tone, and ends with a clear call to action.\n"
-                    "  - \"hashtag\": A list of custom, relevant hashtags that reflect the event's theme, location, and target audience. Avoid generic or unrelated trending tags.\n\n"
-                    "Other rules to follow:\n"
-                    "- The writing style should adapt to the platform (e.g., Instagram, Facebook, LinkedIn) and tone (e.g., fun, professional, inspirational).\n"
-                    "- If include_emoji is true, use emojis according to the specified emoji_level (low, medium, high) to enhance but not overwhelm the message.\n"
-                    "- Use any provided power_words and hashtag_seeds creatively and naturally in the post.\n"
-                    "- Incorporate all essential event info without sounding robotic or repetitive.\n"
-                    "- Avoid repeating post content across the list.\n\n"
-                    "Output only the final JSON, without any explanation or extra text. For example:\n"
-                    "{\n"
-                    "  \"post_list\": [\n"
-                    "    {\n"
-                    "      \"content\": \"🚀 Ready to unleash your AI potential? Join the AI Hackathon on July 20th at National Taiwan University! 24 hours of coding, creativity, and innovation await. Sign up now 👉 https://example.com/hackathon\",\n"
-                    "      \"hashtag\": [\"#AIHackathon\", \"#CreativeChallenge\", \"#NTU\", \"#Hackathon2025\"]\n"
-                    "    }\n"
-                    "  ]\n"
-                    "}"
-                )
+    system_prompt = """
+                    You are a professional social media copywriting assistant.
 
+                    Your task is to generate creative, engaging, and platform-tailored social media posts based on the provided event details and content strategy preferences.
 
+                    You must strictly follow these rules:
 
+                    FORMAT:
+                    - Return a JSON object: { "post_list": [...] }
+                    - Each item in "post_list" must be an object with:
+                    - "content": A full social media caption. It must:
+                        • Include essential event details (event name, date/time, location, and registration link).
+                        • Start with a compelling hook based on the provided hook_type.
+                        • Match the given tone and platform style.
+                        • End with a clear call to action.
+                    - "hashtag": A list of 3-6 custom, relevant hashtags that reflect the event's theme, location, and target audience.
+                        • Avoid generic or unrelated trending tags.
+
+                    STYLE RULES:
+                    - Match tone and writing style to the platform (e.g., Instagram: informal, Facebook: conversational, LinkedIn: professional).
+                    - If include_emoji is true, use emojis based on emoji_level:
+                    • low: 1-2 emojis max, sparing use.
+                    • medium: 3-5 emojis, balanced and expressive.
+                    • high: 6-8 max, energetic but not chaotic.
+                    - Incorporate provided power_words and hashtag_seeds creatively and naturally.
+                    - Each post must be unique — avoid rephrased duplicates.
+                    - Keep each post within the specified words_limit.
+                    - Write in the specified language.
+                    - Do NOT use markdown, HTML, or explanations. Return only the JSON object.
+
+                    EXAMPLE OUTPUT:
+                    {
+                    "post_list": [
+                        {
+                        "content": "🚀 Ready to unleash your AI potential? Join the AI Hackathon on July 20th at National Taiwan University! 24 hours of coding, creativity, and innovation await. Sign up now 👉 https://example.com/hackathon",
+                        "hashtag": ["#AIHackathon", "#CreativeChallenge", "#NTU", "#Hackathon2025"]
+                        }
+                    ]
+                    }
+                    """
 
     user_prompt = (
 
@@ -325,11 +360,83 @@ def get_social_post_generation_prompt(event_data: dict) -> str:
         f"include_emoji: {social_post.get('include_emoji')}\n"
         f"emoji_level: {social_post.get('emoji_level')}\n"
         f"power_words: {social_post.get('power_words')}\n"
-        f"hsashtag_seeds: {social_post.get('hsashtag_seeds')}\n"
+        f"hashtag_seeds: {social_post.get('hashtag_seeds')}\n"
         f"language: {social_post.get('language')}\n"
         
 
     )
 
+
+    return system_prompt + "\n\n" + user_prompt
+
+
+def get_poster_copy_generation_prompt(event_data: dict) -> str:
+    event = event_data.get("event", {})
+    poster = event_data.get("poster", {})
+
+    system_prompt = (
+        "You are a professional marketing copywriter for posters. Your goal is to generate engaging and polished text.\n"
+        "Output must be a valid JSON object like: {\"headline\": \"...\", \"subheadline\": \"...\"}\n"
+        "Instructions:\n"
+        "- Headline: short, bold, emotional, no more than 8 words\n"
+        "- Subheadline: one sentence only, clear and under 100 characters\n"
+        "- Language: MUST match the event language precisely (e.g., Traditional Chinese if requested)\n"
+        "- Avoid generic or vague expressions like 'Join us today!'\n"
+        "- Do NOT use emojis, hashtags, or filler words\n"
+        "- Subheadline must add information beyond the headline"
+    )
+
+
+    user_prompt = (
+        f"Event name: {event.get('event_name')}\n"
+        f"Description: {event.get('event_description')}\n"
+        f"Event type: {event.get('event_type')}\n"
+        f"Slogan: {event.get('event_slogan')}\n"
+        f"Audience: {event.get('target_audience')}\n"
+        f"language: {poster.get('language')}\n"
+    )
+
+    return system_prompt + "\n\n" + user_prompt
+
+def get_poster_image_prompt(event_data: dict) -> str:
+    event = event_data.get("event", {})
+    venue = event_data.get("venue", {})
+    poster = event_data.get("poster", {})
+    poster_text = event_data.get("poster_text", {})
+
+    system_prompt = (
+        "You are a visual AI agent specialized in creating poster images that combine "
+        "both text and background visuals in a harmonious way.\n"
+        "Generate a poster image as a PNG that includes the following text elements clearly and aesthetically:\n"
+        "- Event headline\n"
+        "- Event subheadline\n"
+        "- Event start and end time\n"
+        "- Event location\n"
+        "Leave a blank space in the bottom-right corner reserved for a QR code.\n\n"
+        "Use the following style guidelines to design the poster:\n"
+        "- Mood: match the tone of the event\n"
+        "- Color scheme: use the specified colors\n"
+        "- Layout style: follow the given layout style\n"
+        "- Font style: apply the given font style\n\n"
+        "Base64-encode the resulting PNG image.\n"
+        "Return ONLY a JSON object exactly in this format:\n"
+        "{\"image_base64\": \"<base64_encoded_png_image>\"}"
+    )
+
+
+    user_prompt = (
+        f"Headline (for reference): {poster_text.get('headline')}\n"
+        f"Subheadline (for reference): {poster_text.get('subheadline')}\n"
+        f"Target Audience: {event.get('event_target_audience')}\n"
+        f"Mood: {poster.get('tone')}\n"
+        f"Color scheme: {poster.get('color_scheme')}\n"
+        f"Layout style: {poster.get('layout_style')}\n"
+        f"Font style: {poster.get('font_style')}\n"
+        f"Start time: {event.get('start_time')}\n"
+        f"End time: {event.get('end_time')}\n"
+        f"Location: {venue.get('name')}\n"
+        f"Address: {venue.get('address')}\n"
+        "Focus on a harmonious visual design that supports text overlay."
+    )
 
     return system_prompt + "\n\n" + user_prompt

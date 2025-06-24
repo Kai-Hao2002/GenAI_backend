@@ -16,7 +16,8 @@ def has_role(user, event, roles):
     return EventEditor.objects.filter(event=event, user=user, role__in=roles).exists()
 
 
-class EventListAPIView(APIView): # Get all activities in which the user participates
+# Get all activities in which the user participates
+class EventListAPIView(APIView): 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
