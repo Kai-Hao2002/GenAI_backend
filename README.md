@@ -1,0 +1,92 @@
+======================= windows command ======================= 
+cd GENAI_BACKEND
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv\Scripts\Activate
+
+
+
+pip install django
+pip install django psycopg2-binary
+pip install djangorestframework
+pip install python-dotenv
+pip install google-generativeai
+pip install geopy
+pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+pip install python-decouple
+pip install django-cors-headers
+pip install pillow qrcode requests
+$env:OAUTHLIB_INSECURE_TRANSPORT = "1" 
+pip install qrcode[pil] pillow
+pip install google Pillow
+pip install google-genai pillow 
+
+
+
+
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver 8000
+
+
+
+
+python manage.py createsuperuser
+
+
+//the place to store key
+.env contains Gimini key、 gmail key
+credentials.json contains google form auth key
+
+
+
+
+
+======================= mac command ======================= 
+cd Desktop/GenAI_backend-main
+建立虛擬環境
+python3 -m venv venv 
+啟動虛擬環境
+source venv/bin/activate
+成功後你會看到終端機前面多出 (venv)
+----------------
+pip install django psycopg2-binary djangorestframework  python-dotenv google-generativeai
+pip install geopy
+pip install google_auth_oauthlib
+-----0616新加的
+pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+pip install python-decouple
+pip install pillow qrcode requests
+pip install qrcode[pil] pillow
+-----0616新加的
+export OAUTHLIB_INSECURE_TRANSPORT=1 
+//mac用來創google表單
+
+python manage.py makemigrations
+python manage.py migrate
+
+---------------------------
+
+pip install django-cors-headers
+
+-------
+加入到 settings.py：
+INSTALLED_APPS = [
+    ...
+    'corsheaders',
+    ...
+]
+
+MIDDLEWARE = [
+    ...
+    'corsheaders.middleware.CorsMiddleware',
+    ...
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+------------
+
+python manage.py runserver 8000
+
+
