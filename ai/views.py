@@ -112,14 +112,16 @@ class TaskAssignmentGenerationAPIView(APIView):
         }
 
         try:
-    
             result = generate_task_assignment_from_gemini(event_data)
 
-            # save in data base
-            task_data_list = result.get("task_summary_by_role", [])
+            
             TaskAssignment.objects.filter(event=event).delete()  
+
+            task_data_list = result.get("task_summary_by_role", [])
+            updated_task_data_list = []
+
             for task in task_data_list:
-                TaskAssignment.objects.create(
+                saved = TaskAssignment.objects.create(
                     event=event,
                     role=task.get("role"),
                     description=task.get("description", ""),
@@ -127,8 +129,15 @@ class TaskAssignmentGenerationAPIView(APIView):
                     start_time=task.get("start_time"),
                     end_time=task.get("end_time"),
                 )
+                
+                task["id"] = saved.id
+                updated_task_data_list.append(task)
+
+            result["task_summary_by_role"] = updated_task_data_list
+            result["event_id"] = event.id
 
             return Response(result, status=status.HTTP_200_OK)
+
 
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -200,14 +209,14 @@ class VenueSuggestionGenerationAPIView(APIView):
                 venue["address"] = address if address else venue.get("address", "")
                 venue["map_url"] = map_url if map_url else venue.get("map_url")
 
-                updated_suggestions.append(venue)
+                
 
               
                 if idx == 0:
                  
                     VenueSuggestion.objects.filter(event=event).delete()
 
-                    VenueSuggestion.objects.create(
+                    saved = VenueSuggestion.objects.create(
                         event=event,
                         name=venue.get("name"),
                         address=venue["address"],
@@ -217,9 +226,13 @@ class VenueSuggestionGenerationAPIView(APIView):
                         is_outdoor=venue.get("is_outdoor"),
                     )
 
-           
-            result["venue_suggestions"] = updated_suggestions
+ 
+                result["id"] = saved.id  
+                result["event_id"] = event.id
 
+                updated_suggestions.append(venue)
+
+            result["venue_suggestions"] = updated_suggestions
             return Response(result, status=status.HTTP_200_OK)
 
         except ValueError as e:
@@ -258,17 +271,29 @@ class RegistrationFormGenerationAPIView(APIView):
 
         try:
             result = generate_registration_form_from_gemini(event_data)
+
+            
             Registration.objects.filter(event=event).delete()
+
             registration_list = result.get("registration-list", [])
-            for registration in registration_list:
-                Registration.objects.create(
+            saved_id = None  
+
+            for idx, registration in enumerate(registration_list):
+                saved = Registration.objects.create(
                     event=event,
                     event_intro=registration.get("event_intro", ""),
                     form_title=registration.get("form_title", ""),
                     form_fields=registration.get("form_fields", ""),
                 )
+                if idx == 0:
+                    saved_id = saved.id
+
+            
+            result["id"] = saved_id
+            result["event_id"] = event.id
 
             return Response(result, status=status.HTTP_200_OK)
+
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -331,14 +356,21 @@ class InvitationGenerationAPIView(APIView):
             result = generate_invitation_from_gemini(event_data)
 
             invitation_list = result.get("invitation_list", [])
-            for invitation in invitation_list:
-                EmailLog.objects.create(
+            saved_id = None
+
+            for idx, invitation in enumerate(invitation_list):
+                saved = EmailLog.objects.create(
                     event=event,
                     recipient_email=recipient_email,
                     recipient_name=receiver_name,
                     subject=invitation.get("invitation_letter_subject", ""),
                     body=invitation.get("invitation_letter_body", ""),
                 )
+                if idx == 0:
+                    saved_id = saved.id
+
+            result["id"] = saved_id  
+            result["event_id"] = event.id
 
             return Response(result, status=status.HTTP_200_OK)
 
@@ -414,16 +446,26 @@ class SocialPostGenerationAPIView(APIView):
             SocialPost.objects.filter(event=event).delete()
 
             post_list = result.get("post_list", [])
+            updated_post_list = []
+
             for post in post_list:
-                SocialPost.objects.create(
+                saved = SocialPost.objects.create(
                     event=event,
                     platform=platform,
                     tone=tone,
                     language=language,
                     content=post.get("content", ""),
                 )
+                
+                post["id"] = saved.id
+                updated_post_list.append(post)
+
+            result["post_list"] = updated_post_list
+            result["event_id"] = event.id
 
             return Response(result, status=status.HTTP_200_OK)
+
+
 
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
