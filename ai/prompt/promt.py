@@ -62,7 +62,6 @@ def get_task_assignment_generation_prompt(event_data: dict) -> str:
             Return exactly one JSON object with the following structure:
 
             {
-            "event_id": <string or number>,
             "task_summary_by_role": [
                 {
                 "role": "<role_code>",
@@ -82,7 +81,6 @@ def get_task_assignment_generation_prompt(event_data: dict) -> str:
         )
 
     user_prompt = (
-        f"event_id: {event.get('event_id')}\n"
         f"event_name: {event.get('event_name')}\n"
         f"type: {event.get('type')}\n"
         f"start_time: {event.get('start_time')}\n"
