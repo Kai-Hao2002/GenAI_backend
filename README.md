@@ -34,12 +34,11 @@ pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-pyt
 pip install python-decouple
 pip install django-cors-headers
 pip install pillow qrcode requests
-$env:OAUTHLIB_INSECURE_TRANSPORT = "1" 
 pip install qrcode[pil] pillow
 pip install google Pillow
 pip install google-genai pillow 
 
-
+$env:OAUTHLIB_INSECURE_TRANSPORT = "1" 
 ----------run server-------------------
 python manage.py makemigrations
 python manage.py migrate

@@ -33,8 +33,24 @@ SECRET_KEY = 'django-insecure-jo2v0otv%-87066h#&1mqv9f10f$$30wcf)d0ex@*lmz69c+0p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["https://genai-backend-2gji.onrender.com"]
 
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "key": "",
+        }
+    }
+}
 
 # Application definition
 
