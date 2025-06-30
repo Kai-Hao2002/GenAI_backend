@@ -40,7 +40,7 @@ class GoogleFormCreateAPIView(APIView):
             return Response({"error": "form_fields is empty in prompt data"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            creds = load_credentials()
+            creds = load_credentials(request)
             if not creds:
                 return Response({"error": "Google OAuth credentials missing"}, status=status.HTTP_401_UNAUTHORIZED)
 
