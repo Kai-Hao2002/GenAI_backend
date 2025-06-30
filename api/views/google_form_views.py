@@ -26,12 +26,18 @@ def google_auth_init(request):
         include_granted_scopes='true'
     )
     request.session['state'] = state
+
+    print(f"[google_auth_init] Stored state in session: {state}")
+    print(f"[google_auth_init] Session keys now: {list(request.session.keys())}")
+
     return HttpResponseRedirect(authorization_url)
 
 
 # Receive the code returned by Google OAuth, obtain and store the token in session
 def google_auth_callback(request):
     state = request.session.get('state')
+    print(f"[google_auth_callback] Retrieved state from session: {state}")
+
     if not state:
         return HttpResponse("⚠️ State not found in session.", status=400)
 
@@ -49,6 +55,10 @@ def google_auth_callback(request):
 
     # Store token info in session (JSON string)
     request.session['credentials'] = credentials.to_json()
+    request.session.save()  # 確保 session 強制寫入
+
+    print(f"[google_auth_callback] Stored credentials in session.")
+    print(f"[google_auth_callback] Session keys now: {list(request.session.keys())}")
 
     return HttpResponse("✅ Authorization successful, token stored in session.")
 
@@ -56,16 +66,21 @@ def google_auth_callback(request):
 # Load credentials from session, refresh if expired
 def load_credentials(request):
     creds_json = request.session.get('credentials')
+    print(f"[load_credentials] Credentials JSON in session: {creds_json}")
+
     if not creds_json:
+        print("[load_credentials] No credentials found in session.")
         return None
 
     creds_data = json.loads(creds_json)
     creds = Credentials.from_authorized_user_info(creds_data)
 
     if creds and creds.expired and creds.refresh_token:
+        print("[load_credentials] Credentials expired, refreshing...")
         creds.refresh(Request())
-        # Update refreshed token back to session
         request.session['credentials'] = creds.to_json()
+        request.session.save()
+        print("[load_credentials] Refreshed credentials saved back to session.")
 
     return creds
 
@@ -75,6 +90,8 @@ def create_google_form(request, form_title, form_fields, form_description):
     creds = load_credentials(request)
     if not creds:
         return HttpResponse("⚠️ Missing or invalid credentials.", status=401)
+
+    print(f"[create_google_form] Using credentials: {creds}")
 
     service = build('forms', 'v1', credentials=creds)
 
