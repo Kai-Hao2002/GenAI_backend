@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-jo2v0otv%-87066h#&1mqv9f10f$$30wcf)d0ex@*lmz69c+0p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["https://genai-backend-2gji.onrender.com"]
+ALLOWED_HOSTS = ['*']
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
