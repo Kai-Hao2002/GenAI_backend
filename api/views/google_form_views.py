@@ -3,7 +3,7 @@ import json
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.conf import settings
-
+from api.models import GoogleCredentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -27,17 +27,12 @@ def google_auth_init(request):
     )
     request.session['state'] = state
 
-    print(f"[google_auth_init] Stored state in session: {state}")
-    print(f"[google_auth_init] Session keys now: {list(request.session.keys())}")
-
     return HttpResponseRedirect(authorization_url)
 
 
-# Receive the code returned by Google OAuth, obtain and store the token in session
+# Receive the code returned by Google OAuth, obtain and store the token in DB (only one record)
 def google_auth_callback(request):
     state = request.session.get('state')
-    print(f"[google_auth_callback] Retrieved state from session: {state}")
-
     if not state:
         return HttpResponse("⚠️ State not found in session.", status=400)
 
@@ -53,41 +48,35 @@ def google_auth_callback(request):
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
 
-    # Store token info in session (JSON string)
-    request.session['credentials'] = credentials.to_json()
-    request.session.save()  # 確保 session 強制寫入
+    # 存資料庫，不綁 user，固定存一筆 id=1
+    obj, created = GoogleCredentials.objects.get_or_create(id=1)
+    obj.token_json = credentials.to_json()
+    obj.save()
 
-    print(f"[google_auth_callback] Stored credentials in session.")
-    print(f"[google_auth_callback] Session keys now: {list(request.session.keys())}")
-
-    return HttpResponse("✅ Authorization successful, token stored in session.")
+    return HttpResponse("✅ Authorization successful, token saved in DB.")
 
 
-# Load credentials from session, refresh if expired
-def load_credentials(request):
-    creds_json = request.session.get('credentials')
-    print(f"[load_credentials] Credentials JSON in session: {creds_json}")
-
-    if not creds_json:
-        print("[load_credentials] No credentials found in session.")
+# Load credentials from DB, refresh if expired
+def load_credentials():
+    try:
+        obj = GoogleCredentials.objects.get(id=1)
+    except GoogleCredentials.DoesNotExist:
         return None
 
-    creds_data = json.loads(creds_json)
+    creds_data = json.loads(obj.token_json)
     creds = Credentials.from_authorized_user_info(creds_data)
 
     if creds and creds.expired and creds.refresh_token:
-        print("[load_credentials] Credentials expired, refreshing...")
         creds.refresh(Request())
-        request.session['credentials'] = creds.to_json()
-        request.session.save()
-        print("[load_credentials] Refreshed credentials saved back to session.")
+        obj.token_json = creds.to_json()
+        obj.save()
 
     return creds
 
 
 # Create Google Form with credentials
-def create_google_form(request, form_title, form_fields, form_description):
-    creds = load_credentials(request)
+def create_google_form(form_title, form_fields, form_description):
+    creds = load_credentials()
     if not creds:
         return HttpResponse("⚠️ Missing or invalid credentials.", status=401)
 
@@ -141,4 +130,4 @@ def create_google_form(request, form_title, form_fields, form_description):
 
     registration_url = f"https://docs.google.com/forms/d/{form_id}/viewform"
 
-    return HttpResponse(f"Google Form created: <a href='{registration_url}' target='_blank'>{registration_url}</a>")
+    return registration_url

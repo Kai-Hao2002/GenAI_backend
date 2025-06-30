@@ -129,3 +129,10 @@ class EventEditor(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.event.name} ({self.role})"
+    
+class GoogleCredentials(models.Model):
+    token_json = models.TextField()  
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"GoogleCredentials for {self.user.username}"
