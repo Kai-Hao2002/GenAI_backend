@@ -13,7 +13,7 @@ from googleapiclient.discovery import build
 # Start the OAuth authorization process
 def google_auth_init(request):
     flow = Flow.from_client_secrets_file(
-        'credentials.json',  # Google Cloud Console 的 client_secret
+        '/etc/secrets/credentials.json',  # Render Secret File 
         scopes=[
             'https://www.googleapis.com/auth/forms.body',
             'https://www.googleapis.com/auth/forms.responses.readonly'
@@ -28,11 +28,15 @@ def google_auth_init(request):
     request.session['state'] = state
     return HttpResponseRedirect(authorization_url)
 
-# Receive the code returned by Google OAuth, obtain and store the token
+
+# Receive the code returned by Google OAuth, obtain and store the token in session
 def google_auth_callback(request):
-    state = request.session['state']
+    state = request.session.get('state')
+    if not state:
+        return HttpResponse("⚠️ State not found in session.", status=400)
+
     flow = Flow.from_client_secrets_file(
-        'credentials.json',
+        '/etc/secrets/credentials.json',
         scopes=[
             'https://www.googleapis.com/auth/forms.body',
             'https://www.googleapis.com/auth/forms.responses.readonly'
@@ -43,15 +47,35 @@ def google_auth_callback(request):
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
 
-    #Store token 
-    with open('token.json', 'w') as token_file:
-        token_file.write(credentials.to_json())
+    # Store token info in session (JSON string)
+    request.session['credentials'] = credentials.to_json()
 
-    return HttpResponse("✅ Authorization successful, token stored")
-
+    return HttpResponse("✅ Authorization successful, token stored in session.")
 
 
-def create_google_form(creds, form_title, form_fields, form_description):
+# Load credentials from session, refresh if expired
+def load_credentials(request):
+    creds_json = request.session.get('credentials')
+    if not creds_json:
+        return None
+
+    creds_data = json.loads(creds_json)
+    creds = Credentials.from_authorized_user_info(creds_data)
+
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        # Update refreshed token back to session
+        request.session['credentials'] = creds.to_json()
+
+    return creds
+
+
+# Create Google Form with credentials
+def create_google_form(request, form_title, form_fields, form_description):
+    creds = load_credentials(request)
+    if not creds:
+        return HttpResponse("⚠️ Missing or invalid credentials.", status=401)
+
     service = build('forms', 'v1', credentials=creds)
 
     # 1. Create a form, only info.title can be set
@@ -98,21 +122,6 @@ def create_google_form(creds, form_title, form_fields, form_description):
 
     service.forms().batchUpdate(formId=form_id, body={"requests": requests}).execute()
 
-
     registration_url = f"https://docs.google.com/forms/d/{form_id}/viewform"
 
-    return registration_url
-
-
-def load_credentials():
-    if not os.path.exists('token.json'):
-        return None
-
-    with open('token.json', 'r') as token_file:
-        creds_data = json.load(token_file)
-        creds = Credentials.from_authorized_user_info(creds_data)
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-            with open('token.json', 'w') as token_file:
-                token_file.write(creds.to_json())
-        return creds
+    return HttpResponse(f"Google Form created: <a href='{registration_url}' target='_blank'>{registration_url}</a>")
