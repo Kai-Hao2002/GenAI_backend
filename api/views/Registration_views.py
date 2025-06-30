@@ -39,6 +39,13 @@ class GoogleFormCreateAPIView(APIView):
         if not form_fields:
             return Response({"error": "form_fields is empty in prompt data"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # === Debug Start ===
+        session_keys = list(request.session.keys())
+        credentials_in_session = request.session.get('credentials')
+        print(f"Session keys: {session_keys}")
+        print(f"Credentials in session: {credentials_in_session}")
+        # === Debug End ===
+
         try:
             creds = load_credentials(request)
             if not creds:
@@ -55,7 +62,7 @@ class GoogleFormCreateAPIView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+       
 class RegistrationListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
