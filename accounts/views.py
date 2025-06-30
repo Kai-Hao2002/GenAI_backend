@@ -15,7 +15,7 @@ from django.utils.timezone import now
 from accounts.serializers import UserSerializer
 from django.conf import settings
 from django.core.mail import send_mail
-
+from django.shortcuts import render, redirect
 User = get_user_model()
 
 class RegisterView(APIView):
@@ -73,24 +73,39 @@ class RegisterView(APIView):
         }, status=201)
     
 # Process verification link (activate account)
-class ActivateAccountView(APIView):
-    permission_classes = []
+# class ActivateAccountView(APIView):
+#     permission_classes = []
 
-    def get(self, request, uidb64, token):
-        try:
-            # Convert the encoded uid back to user pk
-            uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            user = None
+#     def get(self, request, uidb64, token):
+#         try:
+#             # Convert the encoded uid back to user pk
+#             uid = force_str(urlsafe_base64_decode(uidb64))
+#             user = User.objects.get(pk=uid)
+#         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+#             user = None
 
-        if user is not None and default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-            return Response({'message': 'Account successfully activated'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'The verification link is invalid or has expired'}, status=status.HTTP_400_BAD_REQUEST)
+#         if user is not None and default_token_generator.check_token(user, token):
+#             user.is_active = True
+#             user.save()
+#             return Response({'message': 'Account successfully activated'}, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'error': 'The verification link is invalid or has expired'}, status=status.HTTP_400_BAD_REQUEST)
 
+def activate_account(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        context = {'user': user, 'success': True}
+    else:
+        context = {'success': False}
+
+    return render(request, 'accounts/activation_result.html', context)
 
 # Resend verification link
 class ResendActivationEmailView(APIView):
