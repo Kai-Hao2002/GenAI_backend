@@ -79,7 +79,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000"  
+    # "https://your-frontend.vercel.app",  
+]
+CORS_ALLOW_CREDENTIALS = True
 ROOT_URLCONF = 'GENAI_BACKEND.urls'
 
 TEMPLATES = [

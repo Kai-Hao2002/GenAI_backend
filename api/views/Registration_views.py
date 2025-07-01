@@ -47,12 +47,12 @@ class GoogleFormCreateAPIView(APIView):
         # === Debug End ===
 
         try:
-            # 不帶 user 參數，load_credentials 直接從 DB 讀
+            
             creds = load_credentials()
             if not creds:
                 return Response({"error": "Google OAuth credentials missing"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            # create_google_form 現在只帶表單資訊
+            # create_google_form 
             registration_url = create_google_form(form_title, form_fields, form_description)
 
             registration.registration_url = registration_url

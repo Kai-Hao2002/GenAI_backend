@@ -14,7 +14,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
-from django.utils.timezone import localtime
+from django.utils.timezone import localtime,make_aware
 from ai.services.services import (
     generate_event_from_gemini,generate_task_assignment_from_gemini,
     generate_venue_suggestion_from_gemini,generate_registration_form_from_gemini,
@@ -48,8 +48,8 @@ class GenerateEventAPIView(APIView):
             # Parse the date string and preset it to 00:00 and 23:59:59 on the current day
             date_str = data.get("date")
             event_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            start_time = datetime.combine(event_date, time(00, 00, 00))  # 00:00:00
-            end_time = datetime.combine(event_date, time(23, 59, 59))  # 23:59:59
+            start_time = make_aware(datetime.combine(event_date, time(0, 0, 0)))
+            end_time = make_aware(datetime.combine(event_date, time(23, 59, 59)))
 
             event = Event.objects.create(
                 name=ai_response["name"][0],  # default the first list of name

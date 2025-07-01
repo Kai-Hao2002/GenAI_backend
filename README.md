@@ -37,7 +37,8 @@ pip install pillow qrcode requests
 pip install qrcode[pil] pillow
 pip install google Pillow
 pip install google-genai pillow 
-
+pip install gunicorn   
+pip install whitenoise 
 $env:OAUTHLIB_INSECURE_TRANSPORT = "1" 
 ----------run server-------------------
 python manage.py makemigrations
@@ -66,6 +67,9 @@ pip install python-decouple
 pip install django-cors-headers
 pip install pillow qrcode requests
 pip install qrcode[pil] pillow
+pip install gunicorn   
+pip install whitenoise 
+
 export OAUTHLIB_INSECURE_TRANSPORT=1 
 
 ----------run server-------------------
