@@ -27,7 +27,7 @@
     {% if success %}
         <h1>Account Activated!</h1>
         <p>Hi {{ user.first_name }}, your account has been successfully activated.</p>
-        <!-- <a href="{% url 'login' %}" class="button">Go to Login</a> -->
+        <a href="https://front-end-event-planner.vercel.app/" class="button">Go to Login</a>
     {% else %}
         <h1 class="error">Activation Failed</h1>
         <p>The activation link is invalid or has expired.</p>
