@@ -16,6 +16,7 @@ from accounts.serializers import UserSerializer
 from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 User = get_user_model()
 
 class RegisterView(APIView):
@@ -215,3 +216,63 @@ class AccountDeleteView(APIView):
     def delete(self, request):
         request.user.delete()
         return Response({"message": "Account deleted"}, status=204)
+
+#forget password 
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required."}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"message": "If this email exists, a reset link has been sent."}, status=200)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_link = request.build_absolute_uri(
+            f"/accounts/reset-password-confirm/{uid}/{token}/"
+        )
+
+        subject = "Reset your password"
+        message = f"Hi {user.first_name},\n\nClick the link below to reset your password:\n{reset_link}\n\nIf you didn't request this, just ignore this email."
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+
+        return Response({"message": "If this email exists, a reset link has been sent."}, status=200)
+
+class PasswordResetConfirmView(APIView):
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return HttpResponse("Invalid reset link.", status=400)
+
+        if not default_token_generator.check_token(user, token):
+            return HttpResponse("Token is invalid or expired.", status=400)
+
+        return render(request, "accounts/password_reset_form.html", {
+            "uidb64": uidb64,
+            "token": token,
+        })
+
+    def post(self, request, uidb64, token):
+        new_password = request.POST.get("new_password")
+        if not new_password:
+            return HttpResponse("New password is required.", status=400)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return HttpResponse("Invalid reset link.", status=400)
+
+        if not default_token_generator.check_token(user, token):
+            return HttpResponse("Token is invalid or expired.", status=400)
+
+        user.set_password(new_password)
+        user.save()
+        return HttpResponse("Password reset successful! You can now log in with your new password.")

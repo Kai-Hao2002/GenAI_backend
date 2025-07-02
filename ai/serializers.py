@@ -5,6 +5,8 @@ class EventPreferenceSerializer(serializers.Serializer):
     date = serializers.CharField(max_length=100)
     budget = serializers.IntegerField()
     target_audience = serializers.CharField(max_length=255)
+    goal = serializers.CharField(max_length=255)
+    atmosphere = serializers.CharField(max_length=255)
 
 class InvitationRequestSerializer(serializers.Serializer):
     receiver_name = serializers.CharField()

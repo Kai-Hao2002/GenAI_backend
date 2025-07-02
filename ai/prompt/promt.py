@@ -19,7 +19,7 @@ def get_event_generation_prompt(event_data: dict) -> str:
                     )
 
     user_prompt = (
-        f"Event goal: {event_data.get('goal')}\n"
+        f"Goal: {event_data.get('goal')}\n"
         f"Type: {event_data.get('type')}\n"
         f"Date: {event_data.get('date')}\n"
         f"Budget: {event_data.get('budget')}\n"

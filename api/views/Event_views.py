@@ -187,7 +187,6 @@ class EventEditorListCreateAPIView(APIView):
     def get(self, request, event_id):
         event = get_object_or_404(Event, pk=event_id)
 
-        # Only the owner can query the editor list
         if not has_role(request.user, event, ['owner']):
             return Response({'error': 'Permission denied'}, status=403)
 
@@ -198,26 +197,27 @@ class EventEditorListCreateAPIView(APIView):
     def post(self, request, event_id):
         event = get_object_or_404(Event, pk=event_id)
 
-        # Only owner can add
         if not has_role(request.user, event, ['owner']):
             return Response({'error': 'Permission denied'}, status=403)
 
-        serializer = EventEditorSerializer(data=request.data)
+        serializer = EventEditorSerializer(data=request.data, context={'event': event})
         if serializer.is_valid():
-            user = serializer.validated_data['user']
-
-            if EventEditor.objects.filter(event=event, user=user).exists():
-                return Response({'error': 'User is already an editor'}, status=400)
-
-            EventEditor.objects.create(
-                event=event,
-                user=user,
-                role=serializer.validated_data['role']
-            )
+            serializer.save()
             return Response({'message': 'Editor added'}, status=201)
 
-        return Response(serializer.errors, status=400)
+        email = serializer.validated_data['email']
+        role = serializer.validated_data['role']
 
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist'}, status=404)
+
+        if EventEditor.objects.filter(event=event, user=user).exists():
+            return Response({'error': 'User is already an editor'}, status=400)
+
+        EventEditor.objects.create(event=event, user=user, role=role)
+        return Response({'message': 'Editor added'}, status=201)
 
 class EventEditorDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
