@@ -275,4 +275,70 @@ class PasswordResetConfirmView(APIView):
 
         user.set_password(new_password)
         user.save()
-        return HttpResponse("Password reset successful! You can now log in with your new password.")
+
+        html = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Password Reset Successful</title>
+        <style>
+          body {
+            background: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #2c3e50;
+          }
+          .container {
+            background: white;
+            padding: 2.5rem 3rem;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+          }
+          h2 {
+            color: #27ae60;
+            margin-bottom: 1rem;
+          }
+          p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+          }
+          a.button {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            color: white;
+            font-weight: 600;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+          }
+          a.button:hover {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+          }
+        </style>
+        <script>
+          setTimeout(function() {
+            window.location.href = "https://front-end-event-planner.vercel.app/";
+          }, 3000);
+        </script>
+        </head>
+        <body>
+          <div class="container">
+            <h2>Password reset successful!</h2>
+            <p>You will be redirected to the login page shortly.</p>
+            <a href="https://front-end-event-planner.vercel.app/" class="button">Go to Login Now</a>
+          </div>
+        </body>
+        </html>
+        """
+
+        return HttpResponse(html)
