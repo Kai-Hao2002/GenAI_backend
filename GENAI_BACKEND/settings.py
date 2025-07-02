@@ -80,8 +80,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000"  
-    # "https://your-frontend.vercel.app",  
+    "http://localhost:3000", 
+    "https://front-end-event-planner.vercel.app",  
 ]
 CORS_ALLOW_CREDENTIALS = True
 
