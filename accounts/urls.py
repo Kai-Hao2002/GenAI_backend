@@ -10,8 +10,8 @@ urlpatterns = [
     path('', AccountDetailView.as_view(), name='account-detail'),
     path('account-update/', AccountUpdateView.as_view(), name='account-update'),
     path('account-delete/', AccountDeleteView.as_view(), name='account-delete'),
-    path('accounts/password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
-    path('accounts/reset-password-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
+    path('reset-password-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 
 
 ]
