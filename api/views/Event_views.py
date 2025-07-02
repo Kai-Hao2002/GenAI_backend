@@ -167,6 +167,18 @@ class EventVersionDetailAPIView(APIView):
         serializer = EventVersionSerializer(version)
         return Response(serializer.data, status=200)
 
+class EventVersionListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, event_id):
+        event = get_object_or_404(Event, pk=event_id)
+
+        if not has_role(request.user, event, ['owner', 'editor', 'viewer']):
+            return Response({"error": "Access denied"}, status=403)
+
+        versions = event.versions.all().order_by('-version_number')
+        serializer = EventVersionSerializer(versions, many=True)
+        return Response(serializer.data, status=200)
 
 class EditLogListAPIView(APIView):
     permission_classes = [IsAuthenticated]
