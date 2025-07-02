@@ -328,7 +328,7 @@ class PasswordResetConfirmView(APIView):
         <script>
           setTimeout(function() {
             window.location.href = "https://front-end-event-planner.vercel.app/";
-          }, 3000);
+          }, 5000);
         </script>
         </head>
         <body>
