@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, time
-from ai.serializers import EventPreferenceSerializer
+from ai.serializers import EventPreferenceSerializer,InvitationRequestSerializer
 from api.models import Event,EventEditor,TaskAssignment,VenueSuggestion,Registration,EmailLog,SocialPost,VisualAsset
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import TokenAuthentication
@@ -15,6 +15,9 @@ from rest_framework.permissions import IsAuthenticated
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 from django.utils.timezone import localtime,make_aware
+from django.shortcuts import get_object_or_404
+import traceback
+
 from ai.services.services import (
     generate_event_from_gemini,generate_task_assignment_from_gemini,
     generate_venue_suggestion_from_gemini,generate_registration_form_from_gemini,
@@ -299,34 +302,25 @@ class RegistrationFormGenerationAPIView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# Create email invitation letters
+
 class InvitationGenerationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, event_id):
+       
         if not has_role(request.user, event_id, ['owner', 'editor']):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
 
-        try:
-            event = Event.objects.get(id=event_id)
-        except Event.DoesNotExist:
-            return Response({"error": "Event not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        try:
-            venue = VenueSuggestion.objects.get(event_id=event_id)
-        except VenueSuggestion.DoesNotExist:
-            return Response({"error": "VenueSuggestion not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-        try:
-            registration = Registration.objects.get(event_id=event_id)
-        except Registration.DoesNotExist:
-            return Response({"error": "Registration not found"}, status=status.HTTP_404_NOT_FOUND)
+        event = get_object_or_404(Event, id=event_id)
+        venue = get_object_or_404(VenueSuggestion, event_id=event_id)
+        registration = get_object_or_404(Registration, event_id=event_id)
+
         
-        receiver_name = request.data.get("receiver_name", "")
-        recipient_email = request.data.get("recipient_email", "")
-        words_limit = request.data.get("words_limit", "")
-        tone = request.data.get("tone", "")
-        language = request.data.get("language", "")
+        serializer = InvitationRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = serializer.validated_data
 
         event_data = {
             "event": {
@@ -340,16 +334,16 @@ class InvitationGenerationAPIView(APIView):
             },
             "venue": {
                 "name": venue.name,
-                "address": venue.address,  
+                "address": venue.address,
             },
             "registration": {
                 "registration_url": registration.registration_url,
             },
             "invitation": {
-                "receiver_name": receiver_name,
-                "words_limit": words_limit,  
-                "tone": tone,
-                "language": language,  
+                "receiver_name": data["receiver_name"],
+                "words_limit": data["words_limit"],
+                "tone": data["tone"],
+                "language": data["language"],
             }
         }
 
@@ -357,18 +351,18 @@ class InvitationGenerationAPIView(APIView):
             result = generate_invitation_from_gemini(event_data)
 
             invitation_list = result.get("invitation_list", [])
-            updated_list = []
+            if not invitation_list:
+                return Response({"error": "No invitation content returned from Gemini."}, status=500)
 
+            updated_list = []
             for invitation in invitation_list:
                 saved = EmailLog.objects.create(
                     event=event,
-                    recipient_email=recipient_email,
-                    recipient_name=receiver_name,
+                    recipient_email=data["recipient_email"],
+                    recipient_name=data["receiver_name"],
                     subject=invitation.get("invitation_letter_subject", ""),
                     body=invitation.get("invitation_letter_body", ""),
                 )
-
-                
                 invitation["id"] = saved.id
                 invitation["event_id"] = event.id
                 updated_list.append(invitation)
@@ -376,8 +370,9 @@ class InvitationGenerationAPIView(APIView):
             result["invitation_list"] = updated_list
             return Response(result, status=status.HTTP_200_OK)
 
-
-        except ValueError as e:
+        except Exception as e:
+            print("🛑 Internal error generating invitation:")
+            traceback.print_exc()
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Create posts on the Social media 

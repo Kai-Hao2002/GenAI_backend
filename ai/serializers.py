@@ -5,3 +5,10 @@ class EventPreferenceSerializer(serializers.Serializer):
     date = serializers.CharField(max_length=100)
     budget = serializers.IntegerField()
     target_audience = serializers.CharField(max_length=255)
+
+class InvitationRequestSerializer(serializers.Serializer):
+    receiver_name = serializers.CharField()
+    recipient_email = serializers.EmailField()
+    words_limit = serializers.IntegerField()
+    tone = serializers.CharField()
+    language = serializers.CharField()
