@@ -1,9 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model, authenticate
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
@@ -17,6 +16,10 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
 User = get_user_model()
 
 class RegisterView(APIView):
@@ -150,40 +153,49 @@ class ResendActivationEmailView(APIView):
                 "message": "A new activation email has been sent. Please check your inbox."
             }, status=200)
         
-# login API
-class LoginView(APIView):
+
+User = get_user_model()
+
+class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         username = request.data.get("username")
         password = request.data.get("password")
-
         user = authenticate(username=username, password=password)
+
         if user is not None:
-            # update last_login
+            if not user.is_active:
+                return Response({"error": "Account is not activated."}, status=403)
+
             user.last_login = now()
             user.save(update_fields=['last_login'])
 
-            # 建create token
-            token, created = Token.objects.get_or_create(user=user)
+            refresh = RefreshToken.for_user(user)
+
             return Response({
-                "token": token.key,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
                 "message": "Login successfully!",
             }, status=200)
 
         return Response({"error": "Invalid credentials"}, status=400)
 
-# logout API（delete token）
 class LogoutView(APIView):
-    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        request.user.auth_token.delete()
-        return Response({"message": "Logged out successfully."}, status=200)
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Logged out successfully."}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
 # User info
 class AccountDetailView(APIView):
-    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         serializer = UserSerializer(request.user)
@@ -192,7 +204,7 @@ class AccountDetailView(APIView):
 # Edit Account
 
 class AccountUpdateView(APIView):
-    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def put(self, request):
         serializer = UserSerializer(request.user, data=request.data)
@@ -211,7 +223,7 @@ class AccountUpdateView(APIView):
 # Delete Account
 
 class AccountDeleteView(APIView):
-    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request):
         request.user.delete()

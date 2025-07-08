@@ -17,7 +17,6 @@ from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 from django.utils.timezone import localtime,make_aware
 from django.shortcuts import get_object_or_404
 import traceback
-
 from ai.services.services import (
     generate_event_from_gemini,generate_task_assignment_from_gemini,
     generate_venue_suggestion_from_gemini,generate_registration_form_from_gemini,
@@ -35,7 +34,6 @@ def has_role(user, event_id, roles):
 
 # Create Event
 class GenerateEventAPIView(APIView):
-    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
