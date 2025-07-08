@@ -121,3 +121,36 @@ class EmailLogAutoSendAPIView(APIView):
             "failed_count": failed_count,
         }, status=status.HTTP_200_OK)
 
+class SingleInvitationSendAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            email = EmailLog.objects.get(pk=pk)
+
+            if not has_role(request.user, email.event_id, ['owner', 'editor']):
+                return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+            if email.status == 'sent':
+                return Response({"message": "Email already sent."}, status=status.HTTP_200_OK)
+
+            send_mail(
+                subject=email.subject,
+                message=email.body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email.recipient_email],
+                fail_silently=False,
+            )
+
+            email.status = 'sent'
+            email.sent_at = timezone.now()
+            email.save()
+
+            return Response({"message": "Email sent successfully."}, status=status.HTTP_200_OK)
+
+        except EmailLog.DoesNotExist:
+            return Response({"error": "EmailLog not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            email.status = 'failed'
+            email.save()
+            return Response({"error": f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
